@@ -33,7 +33,12 @@ MONGO_URI = os.environ.get(
 MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "techgear_db")
 
 if PYMONGO_AVAILABLE:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    client = MongoClient(
+        MONGO_URI,
+        serverSelectionTimeoutMS=2000,
+        connectTimeoutMS=2000,
+        socketTimeoutMS=3000,
+    )
     db = client[MONGO_DB_NAME]
 
     categories_col = db["categories"]
