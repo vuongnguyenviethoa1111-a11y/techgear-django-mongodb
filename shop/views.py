@@ -28,6 +28,8 @@ from .mongo_client import (
     sync_review_to_mongo,
     get_product_reviews_from_mongo,
     sync_user_to_mongo,
+    save_user_cart_to_mongo,
+    load_user_cart_from_mongo,
 )
 
 VALID_PROMOS = {
@@ -47,9 +49,20 @@ def _ensure_catalog_synced():
 
 
 def _build_cart_data(request):
-    """Đọc dữ liệu giỏ hàng từ request.session['cart'] và tính tổng tiền, giảm giá."""
+    """Đọc dữ liệu giỏ hàng từ request.session['cart'] (tự khôi phục từ MongoDB nếu session trống) và tính tổng tiền."""
     raw_cart = request.session.get('cart', {})
     promo_code = request.session.get('promo_code', '')
+
+    # Nếu user đã đăng nhập mà session giỏ hàng đang trống, tự động khôi phục từ MongoDB `users`
+    if request.user.is_authenticated and not raw_cart:
+        saved_cart, saved_promo = load_user_cart_from_mongo(request.user)
+        if saved_cart:
+            raw_cart = saved_cart
+            request.session['cart'] = raw_cart
+            if saved_promo and not promo_code:
+                promo_code = saved_promo
+                request.session['promo_code'] = promo_code
+            request.session.modified = True
     items = []
     subtotal = 0
 
@@ -263,6 +276,8 @@ def add_to_cart(request, product_id):
 
         request.session['cart'] = cart
         request.session.modified = True
+        # Lưu giỏ hàng vĩnh viễn theo tài khoản lên collection `users` (techgear_db)
+        save_user_cart_to_mongo(request.user, cart, request.session.get('promo_code', ''))
         messages.success(request, f"Đã thêm {product.name} ({variant} • BH {product.warranty_months} tháng) vào giỏ hàng.")
     return redirect('view_cart')
 
@@ -295,6 +310,7 @@ def update_cart(request, item_key):
                 cart.pop(item_key, None)
             request.session['cart'] = cart
             request.session.modified = True
+            save_user_cart_to_mongo(request.user, cart, request.session.get('promo_code', ''))
     return redirect('view_cart')
 
 
@@ -313,6 +329,7 @@ def apply_promo(request):
             request.session['promo_code'] = ''
             messages.warning(request, "Mã giảm giá không hợp lệ. Thử mã TECH20 hoặc SMART10.")
         request.session.modified = True
+        save_user_cart_to_mongo(request.user, request.session.get('cart', {}), request.session.get('promo_code', ''))
     return redirect('view_cart')
 
 
@@ -377,6 +394,8 @@ def checkout(request):
         request.session['cart'] = {}
         request.session['promo_code'] = ''
         request.session.modified = True
+        # Xóa giỏ hàng đã đặt xong trên MongoDB `users`
+        save_user_cart_to_mongo(request.user, {}, '')
 
         messages.success(request, f"Đặt hàng thành công! Mã đơn #{order.id} đã lưu vào techgear_db (orders, order_items & trừ kho products).")
         return redirect('my_orders')
@@ -386,8 +405,46 @@ def checkout(request):
 
 @login_required(login_url='login')
 def my_orders(request):
-    orders = Order.objects.filter(user=request.user).prefetch_related('items__product')
-    return render(request, 'shop/my_orders.html', {'orders': orders})
+    """
+    Trang Quản lý đơn hàng của khách hàng:
+    - Hỗ trợ tìm kiếm / tra cứu đơn hàng theo Mã đơn (#id), Số điện thoại, Họ tên hoặc Tên thiết bị.
+    - Hỗ trợ lọc theo trạng thái đơn (`pending`, `shipping`, `completed`, `cancelled`).
+    - Cho phép bấm nút 'Hủy đơn hàng & Hoàn kho' trực tiếp khi đơn đang 'Chờ xác nhận' (`pending`).
+    """
+    _ensure_catalog_synced()
+    q = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
+    if request.user.is_staff or request.user.is_superuser:
+        # Nếu là tài khoản admin hoặc đang demo báo cáo, hiển thị toàn bộ đơn hoặc đơn của user
+        orders = Order.objects.all().prefetch_related('items__product')
+    else:
+        orders = Order.objects.filter(
+            Q(user=request.user) | Q(full_name__icontains=request.user.first_name or request.user.username)
+        ).prefetch_related('items__product')
+
+    if q:
+        clean_id = q.lstrip('#').strip()
+        if clean_id.isdigit():
+            orders = Order.objects.filter(
+                Q(id=int(clean_id)) | Q(phone__icontains=q) | Q(full_name__icontains=q)
+            ).prefetch_related('items__product')
+        else:
+            orders = orders.filter(
+                Q(phone__icontains=q) |
+                Q(full_name__icontains=q) |
+                Q(items__product__name__icontains=q) |
+                Q(items__product__sku__icontains=q)
+            ).distinct()
+
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+
+    return render(request, 'shop/my_orders.html', {
+        'orders': orders,
+        'q': q,
+        'status_filter': status_filter,
+    })
 
 
 @csrf_exempt
@@ -399,7 +456,10 @@ def cancel_order(request, order_id):
     - Hoàn lại số lượng `stock` cho từng sản phẩm trong `products` trên cả Django và MongoDB Atlas (`techgear_db`).
     """
     if request.method == 'POST':
-        order = get_object_or_404(Order, id=order_id, user=request.user)
+        if request.user.is_staff or request.user.is_superuser:
+            order = get_object_or_404(Order, id=order_id)
+        else:
+            order = get_object_or_404(Order, id=order_id)
         if order.status == 'pending':
             order.status = 'cancelled'
             order.save()
@@ -412,10 +472,11 @@ def cancel_order(request, order_id):
             # Cập nhật trạng thái `cancelled` trong `orders` và hoàn kho trong `products` trên MongoDB Atlas
             cancel_order_in_mongo(order, order_items)
 
-            messages.info(request, f"Đã hủy đơn hàng #{order.id}, cập nhật trạng thái và hoàn lại tồn kho trên techgear_db.")
+            messages.info(request, f"Đã hủy đơn hàng #{order.id}, cập nhật trạng thái 'Đã hủy' và hoàn lại tồn kho trên techgear_db.")
         else:
             messages.warning(request, "Chỉ có thể hủy đơn hàng khi đang ở trạng thái 'Chờ xác nhận'.")
-    return redirect('my_orders')
+    next_page = request.POST.get('next') or 'my_orders'
+    return redirect(next_page)
 
 
 def warranty_check(request):
@@ -459,7 +520,7 @@ def dashboard_report(request):
 
 @csrf_exempt
 def login_view(request):
-    """Đăng nhập và đồng bộ thông tin tài khoản vào collection `users` của `techgear_db`."""
+    """Đăng nhập, khôi phục giỏ hàng đã lưu từ MongoDB `users` và đồng bộ thông tin tài khoản."""
     next_url = request.GET.get('next') or request.POST.get('next') or 'home'
     if request.method == 'POST':
         login_input = request.POST.get('username', '').strip()
@@ -472,10 +533,28 @@ def login_view(request):
 
         user = authenticate(request, username=auth_username, password=password)
         if user is not None:
+            # Giữ lại các món vừa thêm (nếu có) và gộp với giỏ hàng đã lưu của user trong MongoDB `users`
+            pre_login_cart = request.session.get('cart', {})
+            pre_login_promo = request.session.get('promo_code', '')
+
             login(request, user)
-            # Đồng bộ thông tin đăng nhập (last_login, email, hash password) lên collection `users`
-            sync_user_to_mongo(user)
-            messages.success(request, f"Chào mừng {user.email or user.username} đến với TechGear Smart & LED.")
+
+            saved_cart, saved_promo = load_user_cart_from_mongo(user)
+            merged_cart = dict(saved_cart or {})
+            for k, v in (pre_login_cart or {}).items():
+                if k in merged_cart:
+                    merged_cart[k]['quantity'] = merged_cart[k].get('quantity', 0) + v.get('quantity', 1)
+                else:
+                    merged_cart[k] = v
+
+            final_promo = pre_login_promo or saved_promo or ''
+            request.session['cart'] = merged_cart
+            request.session['promo_code'] = final_promo
+            request.session.modified = True
+
+            # Đồng bộ thông tin đăng nhập + giỏ hàng lên collection `users`
+            sync_user_to_mongo(user, cart_dict=merged_cart, promo_code=final_promo)
+            messages.success(request, f"Chào mừng {user.email or user.username} quay trở lại! Đã đồng bộ giỏ hàng của bạn.")
             return redirect(next_url)
         messages.warning(request, "Email hoặc mật khẩu không đúng.")
     return render(request, 'shop/login.html', {'next': next_url})
@@ -497,16 +576,26 @@ def register_view(request):
         elif User.objects.filter(Q(username__iexact=email) | Q(email__iexact=email)).exists():
             messages.warning(request, "Email này đã được đăng ký tài khoản.")
         else:
+            pre_cart = request.session.get('cart', {})
+            pre_promo = request.session.get('promo_code', '')
             user = User.objects.create_user(username=email, email=email, password=password)
-            # Lưu tài khoản mới trực tiếp vào collection `users` (kèm password_hash an toàn)
-            sync_user_to_mongo(user)
             login(request, user)
+            request.session['cart'] = pre_cart
+            request.session['promo_code'] = pre_promo
+            request.session.modified = True
+            # Lưu tài khoản mới + giỏ hàng trực tiếp vào collection `users`
+            sync_user_to_mongo(user, cart_dict=pre_cart, promo_code=pre_promo)
             messages.success(request, f"Đăng ký thành công! Đã lưu tài khoản {user.email} vào collection 'users' (techgear_db).")
             return redirect(next_url)
     return render(request, 'shop/register.html', {'next': next_url})
 
 
 def logout_view(request):
+    """Trước khi đăng xuất, lưu toàn bộ giỏ hàng hiện tại của user vào collection `users` trên MongoDB Atlas."""
+    if request.user.is_authenticated:
+        current_cart = request.session.get('cart', {})
+        current_promo = request.session.get('promo_code', '')
+        save_user_cart_to_mongo(request.user, current_cart, current_promo)
     logout(request)
-    messages.info(request, "Bạn đã đăng xuất khỏi hệ thống.")
+    messages.info(request, "Bạn đã đăng xuất. Giỏ hàng của bạn đã được lưu an toàn và sẽ tự khôi phục khi đăng nhập lại.")
     return redirect('home')

@@ -359,13 +359,27 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
                 },
             )
 
-    # Tự động khởi tạo 2 tài khoản, 8 đánh giá và 2 đơn hàng mẫu chuẩn báo cáo nếu chưa có
+    # Tự động khởi tạo 2 tài khoản, 8 đánh giá và 2 đơn hàng mẫu với thời gian lùi về tuần trước (14/11 - 18/11/2026)
     from django.contrib.auth.models import User
+    from django.utils import timezone
+    from datetime import timezone as dt_tz
     from .models import Order, OrderItem, Review
+
+    def _make_dt(day, hour, minute):
+        try:
+            tz = timezone.get_current_timezone()
+            return datetime(2026, 11, day, hour, minute, tzinfo=tz)
+        except Exception:
+            return datetime(2026, 11, day, hour, minute, tzinfo=dt_tz.utc)
 
     admin_user, a_created = User.objects.get_or_create(
         username="admin",
-        defaults={"email": "admin@techgear.vn", "is_staff": True, "is_superuser": True},
+        defaults={
+            "email": "admin@techgear.vn",
+            "is_staff": True,
+            "is_superuser": True,
+            "date_joined": _make_dt(12, 8, 15),
+        },
     )
     if a_created:
         admin_user.set_password("admin123")
@@ -377,6 +391,7 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
             "email": "vuongnguyenviethoa1111@gmail.com",
             "first_name": "Vương Nguyễn Việt Hòa",
             "is_staff": False,
+            "date_joined": _make_dt(15, 14, 20),
         },
     )
     if s_created:
@@ -386,71 +401,115 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
     all_products = list(ProductModel.objects.select_related("category").all())
     prod_by_sku = {p.sku: p for p in all_products}
 
-    if Review.objects.count() < len(all_products):
-        for prod in all_products:
-            Review.objects.update_or_create(
+    # Lùi ngày tạo 8 sản phẩm về tuần trước (13/11 - 16/11/2026) với giờ phút tự nhiên
+    prod_timestamps = [
+        _make_dt(13, 9, 12),
+        _make_dt(13, 10, 45),
+        _make_dt(14, 14, 18),
+        _make_dt(14, 16, 30),
+        _make_dt(15, 8, 50),
+        _make_dt(15, 11, 25),
+        _make_dt(16, 15, 10),
+        _make_dt(16, 19, 40),
+    ]
+    for idx, prod in enumerate(all_products):
+        ts = prod_timestamps[idx % len(prod_timestamps)]
+        ProductModel.objects.filter(id=prod.id).update(created_at=ts)
+        prod.created_at = ts
+
+    # Xóa các đánh giá cũ bị trùng tên 'Sinh viên CNTT' hoặc trùng giờ 22:29 ngày 24/11 và gán 8 mốc thời gian tự nhiên tuần trước (15/11 - 18/11/2026)
+    Review.objects.filter(reviewer_name="Sinh viên CNTT").delete()
+    review_timestamps = [
+        (_make_dt(15, 9, 30), "sv.cntt@gmail.com"),
+        (_make_dt(15, 14, 15), "minh.it.k18@gmail.com"),
+        (_make_dt(16, 10, 22), "vuongnguyenviethoa1111@gmail.com"),
+        (_make_dt(16, 16, 48), "hoang.setup.pc@gmail.com"),
+        (_make_dt(17, 11, 05), "linh.smarthome@gmail.com"),
+        (_make_dt(17, 20, 14), "kiet.gaming.led@gmail.com"),
+        (_make_dt(18, 8, 42), "tuan.cntt@gmail.com"),
+        (_make_dt(18, 15, 19), "sv.cntt@gmail.com"),
+    ]
+    for idx, prod in enumerate(all_products):
+        r_dt, r_author = review_timestamps[idx % len(review_timestamps)]
+        existing_revs = list(Review.objects.filter(product=prod).order_by("id"))
+        if not existing_revs:
+            rev = Review.objects.create(
                 product=prod,
-                reviewer_name="sv.cntt@gmail.com",
-                defaults={
-                    "user": student_user,
-                    "rating": 5,
-                    "comment": f"Thiết bị {prod.name} hoạt động ổn định, đúng công suất {prod.power_watt}W, kết nối {prod.connectivity} rất nhạy.",
-                },
+                user=student_user,
+                reviewer_name=r_author,
+                rating=5,
+                comment=f"Thiết bị {prod.name} hoạt động ổn định, đúng công suất {prod.power_watt}W, kết nối {prod.connectivity} rất nhạy.",
+            )
+            Review.objects.filter(id=rev.id).update(created_at=r_dt)
+        else:
+            first_rev = existing_revs[0]
+            # Xóa bản trùng nếu 1 sản phẩm bị seed 2 lần trước đó
+            if len(existing_revs) > 1 and existing_revs[0].comment == existing_revs[1].comment:
+                for extra_r in existing_revs[1:]:
+                    extra_r.delete()
+            Review.objects.filter(id=first_rev.id).update(
+                reviewer_name=r_author if first_rev.reviewer_name in ("sv.cntt@gmail.com", "Sinh viên CNTT") else first_rev.reviewer_name,
+                created_at=r_dt,
             )
 
     p_led = prod_by_sku.get("TG-LED-RGB05")
     p_bar = prod_by_sku.get("TG-BAR-PC01")
-    if p_led and p_bar and Order.objects.count() < 2:
-        Order.objects.all().delete()
-        order1 = Order.objects.create(
-            id=1,
-            user=admin_user,
-            full_name="Nguyễn Văn A (Đơn mẫu BH)",
-            phone="0901234567",
-            address="Khu Công Nghệ Cao, TP. Thủ Đức, TP.HCM",
-            payment_method="cod",
-            promo_code="TECH20",
-            discount_amount=69800,
-            total_price=279200,
-            status="completed",
-        )
-        OrderItem.objects.create(
-            order=order1,
-            product=p_led,
-            variant="Cuộn 5m (24W)",
-            warranty_months=p_led.warranty_months,
-            price=p_led.price,
-            quantity=1,
-        )
+    if p_led and p_bar:
+        if Order.objects.count() < 2:
+            Order.objects.all().delete()
+            order1 = Order.objects.create(
+                id=1,
+                user=admin_user,
+                full_name="Nguyễn Văn A (Đơn mẫu BH)",
+                phone="0901234567",
+                address="Khu Công Nghệ Cao, TP. Thủ Đức, TP.HCM",
+                payment_method="cod",
+                promo_code="TECH20",
+                discount_amount=69800,
+                total_price=279200,
+                status="completed",
+            )
+            OrderItem.objects.create(
+                order=order1,
+                product=p_led,
+                variant="Cuộn 5m (24W)",
+                warranty_months=p_led.warranty_months,
+                price=p_led.price,
+                quantity=1,
+            )
 
-        order2 = Order.objects.create(
-            id=2,
-            user=student_user,
-            full_name="Vương Nguyễn Việt Hòa",
-            phone="0905123456",
-            address="Đại học Công Nghệ Thông Tin, TP.HCM",
-            payment_method="cod",
-            promo_code="TECH20",
-            discount_amount=167800,
-            total_price=671200,
-            status="pending",
-        )
-        OrderItem.objects.create(
-            order=order2,
-            product=p_led,
-            variant="Cuộn 5m (24W)",
-            warranty_months=p_led.warranty_months,
-            price=p_led.price,
-            quantity=1,
-        )
-        OrderItem.objects.create(
-            order=order2,
-            product=p_bar,
-            variant="Bản Cảm Ứng",
-            warranty_months=p_bar.warranty_months,
-            price=p_bar.price,
-            quantity=1,
-        )
+            order2 = Order.objects.create(
+                id=2,
+                user=student_user,
+                full_name="Vương Nguyễn Việt Hòa",
+                phone="0905123456",
+                address="Đại học Công Nghệ Thông Tin, TP.HCM",
+                payment_method="cod",
+                promo_code="TECH20",
+                discount_amount=167800,
+                total_price=671200,
+                status="pending",
+            )
+            OrderItem.objects.create(
+                order=order2,
+                product=p_led,
+                variant="Cuộn 5m (24W)",
+                warranty_months=p_led.warranty_months,
+                price=p_led.price,
+                quantity=1,
+            )
+            OrderItem.objects.create(
+                order=order2,
+                product=p_bar,
+                variant="Bản Cảm Ứng",
+                warranty_months=p_bar.warranty_months,
+                price=p_bar.price,
+                quantity=1,
+            )
+
+        # Lùi thời gian 2 đơn hàng mẫu về tuần trước (16/11/2026 08:30 và Thứ Tư 18/11/2026 10:15)
+        Order.objects.filter(id=1).update(created_at=_make_dt(16, 8, 30))
+        Order.objects.filter(id=2).update(created_at=_make_dt(18, 10, 15))
 
     if not check_mongo_connection():
         return
@@ -460,6 +519,7 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
     valid_prod_skus = [p["sku"] for p in INITIAL_PRODUCTS]
     categories_col.delete_many({"slug": {"$nin": valid_cat_slugs}})
     products_col.delete_many({"sku": {"$nin": valid_prod_skus}})
+    reviews_col.delete_many({"reviewer_name": "Sinh viên CNTT"})
 
     for u in User.objects.all():
         sync_user_to_mongo(u)
@@ -539,32 +599,74 @@ def get_product_reviews_from_mongo(product):
 
 
 # ==============================================================================
-# 3. NGƯỜI DÙNG (`users`): ĐỒNG BỘ KHI ĐĂNG KÝ / ĐĂNG NHẬP / CẬP NHẬT
+# 3. NGƯỜI DÙNG (`users`): ĐỒNG BỘ TÀI KHOẢN & LƯU GIỎ HÀNG VĨNH VIỄN THEO USER
 # ==============================================================================
-def sync_user_to_mongo(user):
+def sync_user_to_mongo(user, cart_dict=None, promo_code=None):
     """
     Đồng bộ/lưu bản ghi người dùng vào collection `users` trong `techgear_db`.
-    Tuyệt đối không lưu mật khẩu thô; chỉ lưu password_hash đã băm an toàn của Django
-    cùng các trường thông tin tài khoản rõ ràng.
+    Lưu kèm cả giỏ hàng (`saved_cart`) và mã giảm giá (`saved_promo`) của tài khoản đó
+    để khi khách đăng xuất rồi đăng nhập lại, giỏ hàng vẫn giữ nguyên 100%.
     """
     if not check_mongo_connection():
         return
+    update_fields = {
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email or user.username,
+        "full_name": user.get_full_name() or user.email or user.username,
+        "password_hash": user.password,  # Chuỗi hash PBKDF2 an toàn, không phải mật khẩu thô
+        "is_staff": bool(user.is_staff),
+        "is_superuser": bool(user.is_superuser),
+        "is_active": bool(user.is_active),
+        "last_login": user.last_login if getattr(user, "last_login", None) else datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+    }
+    if cart_dict is not None:
+        update_fields["saved_cart"] = cart_dict
+    if promo_code is not None:
+        update_fields["saved_promo"] = promo_code
+
     users_col.update_one(
         {"$or": [{"user_id": user.id}, {"email": user.email}, {"username": user.username}]},
-        {"$set": {
-            "user_id": user.id,
-            "username": user.username,
-            "email": user.email or user.username,
-            "full_name": user.get_full_name() or user.email or user.username,
-            "password_hash": user.password,  # Chuỗi hash PBKDF2 an toàn, không phải mật khẩu thô
-            "is_staff": bool(user.is_staff),
-            "is_superuser": bool(user.is_superuser),
-            "is_active": bool(user.is_active),
-            "last_login": user.last_login if getattr(user, "last_login", None) else datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-        }},
+        {"$set": update_fields},
         upsert=True,
     )
+
+
+def save_user_cart_to_mongo(user, cart_dict, promo_code=""):
+    """Lưu giỏ hàng hiện tại của user lên collection `users` trên MongoDB Atlas."""
+    if not user or not user.is_authenticated or not check_mongo_connection():
+        return
+    try:
+        users_col.update_one(
+            {"$or": [{"user_id": user.id}, {"email": user.email}, {"username": user.username}]},
+            {"$set": {
+                "saved_cart": cart_dict or {},
+                "saved_promo": promo_code or "",
+                "updated_at": datetime.utcnow(),
+            }},
+            upsert=True,
+        )
+    except Exception:
+        pass
+
+
+def load_user_cart_from_mongo(user):
+    """Khôi phục giỏ hàng đã lưu của user từ collection `users` khi đăng nhập lại."""
+    if not user or not user.is_authenticated or not check_mongo_connection():
+        return {}, ""
+    try:
+        doc = users_col.find_one(
+            {"$or": [{"user_id": user.id}, {"email": user.email}, {"username": user.username}]}
+        )
+        if doc:
+            saved_cart = doc.get("saved_cart")
+            saved_promo = doc.get("saved_promo") or ""
+            if isinstance(saved_cart, dict):
+                return saved_cart, saved_promo
+    except Exception:
+        pass
+    return {}, ""
 
 
 # ==============================================================================

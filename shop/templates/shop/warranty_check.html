@@ -1,43 +1,56 @@
 {% extends 'shop/base.html' %}
-{% block title %}Tra cứu Bảo hành Điện tử - TechGear{% endblock %}
+{% load shop_filters %}
+{% block title %}Tra cứu Bảo hành Điện tử & Đơn hàng - TechGear{% endblock %}
 
 {% block content %}
-<div class="card" style="border-top: 4px solid #0d9488; margin-bottom:24px;">
-  <h2 style="margin-bottom:8px; color:#0f172a;">🛡️ Tra cứu Bảo hành Điện tử &amp; Lịch sử Mua thiết bị</h2>
-  <p style="color:#475569; font-size:0.92rem; margin-bottom:14px;">
-    Nhập <strong>Số điện thoại mua hàng</strong> hoặc <strong>Mã đơn hàng</strong> để kiểm tra thời hạn bảo hành (12–24 tháng) của từng thiết bị Đèn LED / Phụ kiện thông minh.
+<div class="card" style="border: 1px solid rgba(20, 184, 166, 0.55) !important; margin-bottom:22px;">
+  <h2 style="margin-bottom:8px; color:#f8fafc;">🛡️ Tra cứu Bảo hành Điện tử &amp; Quản lý Đơn hàng</h2>
+  <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:14px;">
+    Nhập <strong>Số điện thoại mua hàng</strong> (VD: <code>0905123456</code> hoặc <code>0901234567</code>) hoặc <strong>Mã đơn hàng</strong> (VD: <code>1</code>, <code>2</code>) để kiểm tra thời hạn bảo hành (12–24 tháng) hoặc hủy đơn khi đang chờ xác nhận.
   </p>
 
   <form method="get" style="display:flex; gap:10px; flex-wrap:wrap;">
-    <input type="text" name="q" value="{{ keyword }}" placeholder="Nhập số điện thoại (VD: 0901234567) hoặc Mã đơn..." required style="flex:1; min-width:240px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px;">
-    <button type="submit" class="btn btn-teal">Tra cứu ngay</button>
+    <input type="text" name="q" value="{{ keyword }}" placeholder="Nhập số điện thoại (VD: 0905123456) hoặc Mã đơn (1, 2)..." required style="flex:1; min-width:240px; padding:10px 14px; border:1px solid rgba(20, 184, 166, 0.5); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
+    <button type="submit" class="btn btn-teal">🔍 Tra cứu ngay</button>
   </form>
 </div>
 
 {% if keyword %}
   {% for o in matched_orders %}
-  <div class="card" style="margin-bottom:14px; border-left: 5px solid #2563eb;">
+  <div class="card" style="margin-bottom:14px; border-left: 5px solid #38bdf8 !important;">
     <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-      <strong style="color:#2563eb; font-size:1.05rem;">Phiếu bảo hành theo Đơn #{{ o.id }} — Ngày mua: {{ o.created_at|date:"d/m/Y H:i" }}</strong>
-      <span style="background:#ccfbf1; color:#0f766e; padding:3px 10px; border-radius:999px; font-size:0.82rem; font-weight:700;">
+      <strong style="color:#38bdf8; font-size:1.05rem;">Phiếu bảo hành theo Đơn #{{ o.id }} — Ngày mua: {{ o.created_at|date:"d/m/Y H:i" }}</strong>
+      <span style="background:rgba(13, 148, 136, 0.25); color:#2dd4bf; border:1px solid rgba(45, 212, 191, 0.4); padding:3px 10px; border-radius:999px; font-size:0.82rem; font-weight:700;">
         {{ o.get_status_display }}
       </span>
     </div>
-    <div style="font-size:0.88rem; color:#475569; margin-bottom:10px;">
-      Khách hàng: <strong>{{ o.full_name }}</strong> | SĐT: <strong>{{ o.phone }}</strong> | Thanh toán: {{ o.get_payment_method_display }}
+    <div style="font-size:0.88rem; color:#cbd5e1; margin-bottom:10px;">
+      Khách hàng: <strong>{{ o.full_name }}</strong> | SĐT: <strong style="color:#2dd4bf;">{{ o.phone }}</strong> | Thanh toán: {{ o.get_payment_method_display }} | Tổng tiền: <strong style="color:#f472b6;">{{ o.total_price|vnd }} VNĐ</strong>
     </div>
-    <div style="background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #dbeafe;">
+    <div style="background:rgba(15, 23, 42, 0.75); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.12);">
       {% for it in o.items.all %}
-      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; padding:5px 0; border-bottom:1px dashed #e2e8f0; font-size:0.9rem;">
-        <span>• <strong>{{ it.product.name }}</strong> ({{ it.variant }}) x{{ it.quantity }}</span>
-        <span style="color:#0d9488; font-weight:700;">🛡️ Bảo hành chính hãng {{ it.warranty_months }} tháng</span>
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; padding:5px 0; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:0.9rem;">
+        <span>• <strong>[{{ it.product.sku }}] {{ it.product.name }}</strong> ({{ it.variant }}) x{{ it.quantity }}</span>
+        <span style="color:#2dd4bf; font-weight:700;">🛡️ Bảo hành chính hãng {{ it.warranty_months }} tháng</span>
       </div>
       {% endfor %}
     </div>
+
+    {% if user.is_authenticated and o.status == 'pending' %}
+    <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+      <form method="post" action="{% url 'cancel_order' o.id %}" onsubmit="return confirm('Xác nhận hủy đơn hàng #{{ o.id }} và hoàn lại tồn kho?');">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="my_orders">
+        <button type="submit" class="btn" style="background:rgba(244, 63, 94, 0.2) !important; color:#fb7185 !important; border:1px solid #fb7185 !important; font-weight:700;">
+          ✕ Hủy đơn hàng #{{ o.id }} &amp; Hoàn kho
+        </button>
+      </form>
+    </div>
+    {% endif %}
   </div>
   {% empty %}
   <div class="card">
-    Không tìm thấy thông tin bảo hành cho từ khóa <strong>"{{ keyword }}"</strong>. Vui lòng kiểm tra lại số điện thoại hoặc đặt thử một đơn hàng mới.
+    Không tìm thấy thông tin đơn hàng / bảo hành cho từ khóa <strong>"{{ keyword }}"</strong>. Bạn hãy thử nhập <code>0905123456</code>, <code>0901234567</code> hoặc mã đơn <code>1</code>, <code>2</code>.
   </div>
   {% endfor %}
 {% endif %}

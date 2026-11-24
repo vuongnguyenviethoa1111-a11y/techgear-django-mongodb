@@ -1,38 +1,82 @@
 {% extends 'shop/base.html' %}
-{% block title %}Đơn hàng & Bảo hành của tôi - TechGear{% endblock %}
+{% load shop_filters %}
+{% block title %}Quản lý Đơn hàng & Bảo hành của tôi - TechGear{% endblock %}
 {% block content %}
-<h2 style="margin-bottom:14px; color:#0f172a;">📋 Đơn hàng &amp; Thiết bị đã đặt</h2>
+<div class="card" style="border: 1px solid rgba(59, 130, 246, 0.55) !important; margin-bottom:18px;">
+  <h2 style="margin-bottom:6px; color:#f8fafc; font-size:1.35rem;">📋 Quản lý Đơn hàng &amp; Tra cứu / Hủy đơn hàng</h2>
+  <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:14px;">
+    Tra cứu các đơn hàng bạn đã đặt theo Mã đơn, Số điện thoại hoặc Tên thiết bị. Với các đơn đang ở trạng thái <strong>Chờ xác nhận</strong>, bạn có thể bấm <strong>Hủy đơn &amp; Hoàn kho</strong> ngay bên dưới.
+  </p>
+
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Tìm theo Mã đơn (VD: 1, 2), SĐT bảo hành, Tên người nhận, Tên thiết bị..." style="flex:1; min-width:240px; padding:10px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
+    <select name="status" style="padding:10px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
+      <option value="">Tất cả trạng thái</option>
+      <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Chờ xác nhận (Có thể hủy)</option>
+      <option value="shipping" {% if status_filter == 'shipping' %}selected{% endif %}>Đang giao hàng</option>
+      <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Đã hoàn thành (Đã kích hoạt BH)</option>
+      <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+    </select>
+    <button type="submit" class="btn btn-cobalt">🔍 Tra cứu đơn</button>
+    <a href="{% url 'my_orders' %}" class="btn">Xóa lọc</a>
+  </form>
+</div>
+
 {% for o in orders %}
-<div class="card" style="margin-bottom:14px; border-left: 5px solid #2563eb;">
+<div class="card" style="margin-bottom:14px; border-left: 5px solid {% if o.status == 'pending' %}#38bdf8{% elif o.status == 'completed' %}#2dd4bf{% elif o.status == 'cancelled' %}#fb7185{% else %}#fbbf24{% endif %} !important;">
   <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-    <strong style="color:#2563eb; font-size:1.05rem;">Đơn hàng #{{ o.id }} — {{ o.created_at|date:"d/m/Y H:i" }}</strong>
-    <span style="background:#ccfbf1; color:#0f766e; padding:3px 10px; border-radius:999px; font-size:0.82rem; font-weight:700;">
-      {{ o.get_status_display }}
-    </span>
+    <strong style="color:#38bdf8; font-size:1.06rem;">Đơn hàng #{{ o.id }} — Ngày đặt: {{ o.created_at|date:"d/m/Y H:i" }}</strong>
+    {% if o.status == 'pending' %}
+      <span style="background:rgba(59, 130, 246, 0.25); color:#60a5fa; border:1px solid rgba(96, 165, 250, 0.4); padding:4px 12px; border-radius:999px; font-size:0.8rem; font-weight:700;">
+        ⏳ {{ o.get_status_display }}
+      </span>
+    {% elif o.status == 'completed' %}
+      <span style="background:rgba(13, 148, 136, 0.25); color:#2dd4bf; border:1px solid rgba(45, 212, 191, 0.4); padding:4px 12px; border-radius:999px; font-size:0.8rem; font-weight:700;">
+        ✓ {{ o.get_status_display }}
+      </span>
+    {% elif o.status == 'cancelled' %}
+      <span style="background:rgba(244, 63, 94, 0.22); color:#fb7185; border:1px solid rgba(251, 113, 133, 0.4); padding:4px 12px; border-radius:999px; font-size:0.8rem; font-weight:700;">
+        ✕ Đã hủy (Đã hoàn trả tồn kho)
+      </span>
+    {% else %}
+      <span style="background:rgba(245, 158, 11, 0.25); color:#fbbf24; padding:4px 12px; border-radius:999px; font-size:0.8rem; font-weight:700;">
+        🚚 {{ o.get_status_display }}
+      </span>
+    {% endif %}
   </div>
-  <div style="color:#64748b; font-size:0.88rem; margin-bottom:10px;">
-    Người nhận: <strong>{{ o.full_name }}</strong> | SĐT Bảo hành: <strong>{{ o.phone }}</strong> | Thanh toán: {{ o.get_payment_method_display }}<br>
-    Địa chỉ: {{ o.address }}
+
+  <div style="color:#cbd5e1; font-size:0.88rem; margin-bottom:10px; line-height:1.6;">
+    Người nhận: <strong>{{ o.full_name }}</strong> | SĐT Bảo hành: <strong style="color:#2dd4bf;">{{ o.phone }}</strong> | Thanh toán: {{ o.get_payment_method_display }}
+    {% if o.promo_code %} | Mã KM: <strong style="color:#fb923c;">{{ o.promo_code }} (-{{ o.discount_amount|vnd }} VNĐ)</strong>{% endif %}<br>
+    Địa chỉ giao hàng: {{ o.address }}
   </div>
-  <div style="background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+
+  <div style="background:rgba(15, 23, 42, 0.75); padding:10px 14px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.12);">
     {% for it in o.items.all %}
-      <div style="font-size:0.9rem; padding:4px 0; display:flex; justify-content:space-between; flex-wrap:wrap;">
+      <div style="font-size:0.88rem; padding:5px 0; display:flex; justify-content:space-between; flex-wrap:wrap; border-bottom:1px dashed rgba(255,255,255,0.08);">
         <span>• <strong>[{{ it.product.sku }}] {{ it.product.name }}</strong> ({{ it.variant }}) x{{ it.quantity }}</span>
-        <span>🛡️ BH {{ it.warranty_months }} tháng — <strong>{{ it.subtotal }} VNĐ</strong></span>
+        <span style="color:#2dd4bf;">🛡️ BH {{ it.warranty_months }} tháng — <strong style="color:#f8fafc;">{{ it.subtotal|vnd }} VNĐ</strong></span>
       </div>
     {% endfor %}
   </div>
-  <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-    <span style="font-weight:800; color:#ff5a36; font-size:1.05rem;">Tổng thanh toán: {{ o.total_price }} VNĐ</span>
+
+  <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <span style="font-weight:800; color:#f472b6; font-size:1.1rem;">Tổng thanh toán: {{ o.total_price|vnd }} VNĐ</span>
+
     {% if o.status == 'pending' %}
-    <form method="post" action="{% url 'cancel_order' o.id %}">
+    <form method="post" action="{% url 'cancel_order' o.id %}" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng #{{ o.id }} và hoàn lại số lượng tồn kho không?');">
       {% csrf_token %}
-      <button type="submit" class="btn" style="color:#e11d48; border-color:#fecdd3;">Hủy đơn &amp; Hoàn kho</button>
+      <input type="hidden" name="next" value="my_orders">
+      <button type="submit" class="btn" style="background:rgba(244, 63, 94, 0.2) !important; color:#fb7185 !important; border:1px solid #fb7185 !important; font-weight:700;">
+        ✕ Hủy đơn hàng &amp; Hoàn lại tồn kho
+      </button>
     </form>
     {% endif %}
   </div>
 </div>
 {% empty %}
-<div class="card">Bạn chưa có đơn hàng nào. <a href="{% url 'home' %}#products" style="color:#2563eb; font-weight:700;">Xem thiết bị ngay</a></div>
+<div class="card">
+  Không tìm thấy đơn hàng nào phù hợp. <a href="{% url 'home' %}#products" style="color:#38bdf8; font-weight:700;">Chọn mua thiết bị ngay →</a>
+</div>
 {% endfor %}
 {% endblock %}
