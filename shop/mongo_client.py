@@ -424,7 +424,7 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
         (_make_dt(15, 14, 15), "minh.it.k18@gmail.com"),
         (_make_dt(16, 10, 22), "vuongnguyenviethoa1111@gmail.com"),
         (_make_dt(16, 16, 48), "hoang.setup.pc@gmail.com"),
-        (_make_dt(17, 11, 05), "linh.smarthome@gmail.com"),
+        (_make_dt(17, 11, 5), "linh.smarthome@gmail.com"),
         (_make_dt(17, 20, 14), "kiet.gaming.led@gmail.com"),
         (_make_dt(18, 8, 42), "tuan.cntt@gmail.com"),
         (_make_dt(18, 15, 19), "sv.cntt@gmail.com"),
