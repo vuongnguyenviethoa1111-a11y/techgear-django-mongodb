@@ -359,25 +359,116 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
                 },
             )
 
+    # Tự động khởi tạo 2 tài khoản, 8 đánh giá và 2 đơn hàng mẫu chuẩn báo cáo nếu chưa có
+    from django.contrib.auth.models import User
+    from .models import Order, OrderItem, Review
+
+    admin_user, a_created = User.objects.get_or_create(
+        username="admin",
+        defaults={"email": "admin@techgear.vn", "is_staff": True, "is_superuser": True},
+    )
+    if a_created:
+        admin_user.set_password("admin123")
+        admin_user.save()
+
+    student_user, s_created = User.objects.get_or_create(
+        username="vuongnguyenviethoa1111@gmail.com",
+        defaults={
+            "email": "vuongnguyenviethoa1111@gmail.com",
+            "first_name": "Vương Nguyễn Việt Hòa",
+            "is_staff": False,
+        },
+    )
+    if s_created:
+        student_user.set_password("Hoa2026cnpm")
+        student_user.save()
+
+    all_products = list(ProductModel.objects.select_related("category").all())
+    prod_by_sku = {p.sku: p for p in all_products}
+
+    if Review.objects.count() < len(all_products):
+        for prod in all_products:
+            Review.objects.update_or_create(
+                product=prod,
+                reviewer_name="sv.cntt@gmail.com",
+                defaults={
+                    "user": student_user,
+                    "rating": 5,
+                    "comment": f"Thiết bị {prod.name} hoạt động ổn định, đúng công suất {prod.power_watt}W, kết nối {prod.connectivity} rất nhạy.",
+                },
+            )
+
+    p_led = prod_by_sku.get("TG-LED-RGB05")
+    p_bar = prod_by_sku.get("TG-BAR-PC01")
+    if p_led and p_bar and Order.objects.count() < 2:
+        Order.objects.all().delete()
+        order1 = Order.objects.create(
+            id=1,
+            user=admin_user,
+            full_name="Nguyễn Văn A (Đơn mẫu BH)",
+            phone="0901234567",
+            address="Khu Công Nghệ Cao, TP. Thủ Đức, TP.HCM",
+            payment_method="cod",
+            promo_code="TECH20",
+            discount_amount=69800,
+            total_price=279200,
+            status="completed",
+        )
+        OrderItem.objects.create(
+            order=order1,
+            product=p_led,
+            variant="Cuộn 5m (24W)",
+            warranty_months=p_led.warranty_months,
+            price=p_led.price,
+            quantity=1,
+        )
+
+        order2 = Order.objects.create(
+            id=2,
+            user=student_user,
+            full_name="Vương Nguyễn Việt Hòa",
+            phone="0905123456",
+            address="Đại học Công Nghệ Thông Tin, TP.HCM",
+            payment_method="cod",
+            promo_code="TECH20",
+            discount_amount=167800,
+            total_price=671200,
+            status="pending",
+        )
+        OrderItem.objects.create(
+            order=order2,
+            product=p_led,
+            variant="Cuộn 5m (24W)",
+            warranty_months=p_led.warranty_months,
+            price=p_led.price,
+            quantity=1,
+        )
+        OrderItem.objects.create(
+            order=order2,
+            product=p_bar,
+            variant="Bản Cảm Ứng",
+            warranty_months=p_bar.warranty_months,
+            price=p_bar.price,
+            quantity=1,
+        )
+
     if not check_mongo_connection():
         return
 
-    # 1. Đẩy/Upsert toàn bộ danh mục hiện có lên collection `categories` (khớp theo slug hoặc name)
+    for u in User.objects.all():
+        sync_user_to_mongo(u)
+
     for cat in CategoryModel.objects.all():
         sync_category_to_mongo(cat)
 
-    # 2. Nếu trên MongoDB Atlas có sản phẩm được sửa trực tiếp trên Atlas UI, cập nhật tồn kho/giá hoặc đẩy từ Django lên
-    mongo_products = {
-        doc.get("sku") or doc.get("name"): doc
-        for doc in products_col.find({})
-    }
-
-    for prod in ProductModel.objects.select_related("category").all():
-        m_doc = mongo_products.get(prod.sku) or mongo_products.get(prod.name)
-        if m_doc and "product_id" not in m_doc:
-            # Nếu document trên Atlas được tạo thủ công chưa có product_id, gắn product_id và đồng bộ
-            pass
+    for prod in all_products:
         sync_product_to_mongo(prod)
+
+    for rev in Review.objects.select_related("product", "user").all():
+        sync_review_to_mongo(rev)
+
+    for ord_obj in Order.objects.prefetch_related("items__product").all():
+        sync_order_to_mongo(ord_obj, list(ord_obj.items.all()), decrement_mongo_stock=False)
 
 
 # ==============================================================================

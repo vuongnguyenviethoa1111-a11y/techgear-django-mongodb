@@ -1,4 +1,5 @@
 {% extends 'shop/base.html' %}
+{% load shop_filters %}
 {% block title %}TechGear - Phụ kiện công nghệ, Đèn LED & Thiết bị thông minh{% endblock %}
 
 {% block extra_css %}
@@ -308,7 +309,7 @@
         <span class="warranty-tag">🛡️ BH {{ p.warranty_months }} tháng</span>
       </div>
       <a href="{% url 'product_detail' p.id %}" class="product-title">{{ p.name }}</a>
-      <div class="price">{{ p.price }} VNĐ</div>
+      <div class="price">{{ p.price|vnd }} VNĐ</div>
 
       <div class="specs-mini-table">
         <div><strong>SKU:</strong> {{ p.sku }} | <strong>Hãng:</strong> {{ p.brand }}</div>
@@ -318,11 +319,10 @@
       </div>
 
       <div class="muted" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>Tồn kho: <strong style="color:{% if p.stock > 5 %}#0d9488{% else %}#e11d48{% endif %};">{{ p.stock }} chiếc</strong></span>
-        <a href="{% url 'product_detail' p.id %}" style="color:#2563eb; font-weight:700; text-decoration:none;">Chi tiết thông số →</a>
+        <span>Tồn kho: <strong style="color:{% if p.stock > 10 %}#2dd4bf{% else %}#fb7185{% endif %};">{{ p.stock }} chiếc</strong></span>
+        <a href="{% url 'product_detail' p.id %}" style="color:#38bdf8; font-weight:700; text-decoration:none;">Chi tiết thông số →</a>
       </div>
 
-      {% if user.is_authenticated %}
       <form method="post" action="{% url 'add_to_cart' p.id %}" class="add-form">
         {% csrf_token %}
         <select name="variant" style="max-width:135px;">
@@ -330,18 +330,11 @@
             <option value="{{ v }}">{{ v }}</option>
           {% endfor %}
         </select>
-        <input type="number" name="quantity" value="1" min="1" max="{{ p.stock|default:10 }}" style="width:58px;">
-        <button type="submit" class="btn btn-coral" style="flex:1;" {% if p.stock == 0 %}disabled{% endif %}>
+        <input type="number" name="quantity" value="1" min="1" max="{{ p.stock|default:10 }}" style="width:58px; text-align:center;">
+        <button type="submit" class="btn" style="flex:1; background:#ec4899 !important; color:#ffffff !important; border:none !important; font-weight:700;" {% if p.stock == 0 %}disabled{% endif %}>
           {% if p.stock > 0 %}+ Thêm giỏ{% else %}Hết hàng{% endif %}
         </button>
       </form>
-      {% else %}
-      <div class="add-form">
-        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-cobalt" style="width:100%; text-align:center;">
-          🔒 Đăng nhập để mua hàng
-        </a>
-      </div>
-      {% endif %}
     </div>
     {% empty %}
     <div class="card" style="grid-column: 1 / -1;">
