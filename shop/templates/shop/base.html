@@ -110,14 +110,14 @@
       color: #ffffff;
     }
     .btn-coral {
-      background: var(--coral);
-      color: #ffffff;
-      border-color: var(--coral);
+      background: #ec4899 !important;
+      color: #ffffff !important;
+      border-color: #ec4899 !important;
     }
     .btn-coral:hover {
-      background: var(--coral-hover);
-      border-color: var(--coral-hover);
-      color: #ffffff;
+      background: #db2777 !important;
+      border-color: #db2777 !important;
+      color: #ffffff !important;
     }
     .btn-teal {
       background: var(--teal);
@@ -200,23 +200,19 @@
 
     .btn-primary,
     .btn-dark,
-    .btn-cobalt,
-    .btn-coral {
-      background: linear-gradient(90deg, #2563eb, #06b6d4, #ec4899) !important;
-      background-size: 200% 200% !important;
+    .btn-cobalt {
+      background: #2563eb !important;
       color: #ffffff !important;
       border: none !important;
-      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3) !important;
-      transition: background-position 0.4s ease, transform 0.2s ease, box-shadow 0.2s ease !important;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35) !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     }
 
     .btn-primary:hover,
     .btn-dark:hover,
-    .btn-cobalt:hover,
-    .btn-coral:hover {
-      background-position: 100% 50% !important;
+    .btn-cobalt:hover {
+      background: #1d4ed8 !important;
       transform: translateY(-2px) !important;
-      box-shadow: 0 10px 28px rgba(236, 72, 153, 0.38) !important;
     }
   </style>
   {% block extra_css %}{% endblock %}

@@ -455,6 +455,12 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
     if not check_mongo_connection():
         return
 
+    # Dọn các document cũ bị dư từ các lần test trước để số lượng khớp 100% với báo cáo (4, 8, 2, 3, 8, 2)
+    valid_cat_slugs = [c["slug"] for c in INITIAL_CATEGORIES]
+    valid_prod_skus = [p["sku"] for p in INITIAL_PRODUCTS]
+    categories_col.delete_many({"slug": {"$nin": valid_cat_slugs}})
+    products_col.delete_many({"sku": {"$nin": valid_prod_skus}})
+
     for u in User.objects.all():
         sync_user_to_mongo(u)
 
