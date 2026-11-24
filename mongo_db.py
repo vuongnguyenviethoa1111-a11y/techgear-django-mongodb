@@ -8,9 +8,6 @@ và cung cấp đúng 6 collections:
 - order_items_col -> db["order_items"]
 - reviews_col     -> db["reviews"]
 - users_col       -> db["users"]
-
-Lệnh kiểm tra trên Terminal:
-python -c "from mongo_db import db; print(db.list_collection_names())"
 """
 import os
 
@@ -25,42 +22,52 @@ except ImportError:
     DESCENDING = -1
     PYMONGO_AVAILABLE = False
 
-MONGO_URI = os.environ.get(
-    "MONGO_URI",
-    "mongodb+srv://vuongnguyenviethoa1111_db_user:Hoa2026cnpm@database.lj6uhtu.mongodb.net/?retryWrites=true&w=majority",
+DEFAULT_ATLAS_URI = (
+    "mongodb+srv://vuongnguyenviethoa1111_db_user:Hoa2026cnpm@database.lj6uhtu.mongodb.net/?retryWrites=true&w=majority"
 )
+
+_env_uri = (os.environ.get("MONGO_URI") or "").strip()
+# Bảo vệ trường hợp biến MONGO_URI trên Railway bị điền nhầm thành username thay vì mongodb+srv://
+if _env_uri.startswith("mongodb://") or _env_uri.startswith("mongodb+srv://"):
+    MONGO_URI = _env_uri
+else:
+    MONGO_URI = DEFAULT_ATLAS_URI
 
 MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "techgear_db")
 
-if PYMONGO_AVAILABLE:
-    client = MongoClient(
-        MONGO_URI,
-        serverSelectionTimeoutMS=2000,
-        connectTimeoutMS=2000,
-        socketTimeoutMS=3000,
-    )
-    db = client[MONGO_DB_NAME]
+client = None
+db = None
+categories_col = None
+products_col = None
+orders_col = None
+order_items_col = None
+reviews_col = None
+users_col = None
 
-    categories_col = db["categories"]
-    products_col = db["products"]
-    orders_col = db["orders"]
-    order_items_col = db["order_items"]
-    reviews_col = db["reviews"]
-    users_col = db["users"]
-else:
-    client = None
-    db = None
-    categories_col = None
-    products_col = None
-    orders_col = None
-    order_items_col = None
-    reviews_col = None
-    users_col = None
+if PYMONGO_AVAILABLE:
+    try:
+        client = MongoClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=2500,
+            connectTimeoutMS=2500,
+            socketTimeoutMS=3000,
+        )
+        db = client[MONGO_DB_NAME]
+
+        categories_col = db["categories"]
+        products_col = db["products"]
+        orders_col = db["orders"]
+        order_items_col = db["order_items"]
+        reviews_col = db["reviews"]
+        users_col = db["users"]
+    except Exception:
+        client = None
+        db = None
 
 
 def check_mongo_connection():
     """Kiểm tra kết nối thực tế tới database `techgear_db` trên MongoDB Atlas."""
-    if not PYMONGO_AVAILABLE or client is None or "<db_password>" in MONGO_URI:
+    if not PYMONGO_AVAILABLE or client is None or db is None:
         return False
     try:
         client.admin.command("ping")
