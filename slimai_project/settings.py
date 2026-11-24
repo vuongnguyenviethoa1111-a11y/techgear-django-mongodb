@@ -10,13 +10,26 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '*',
+    'techgear-django-mongodb-production.up.railway.app',
+    '.up.railway.app',
+    '127.0.0.1',
+    'localhost',
+]
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://techgear-django-mongodb-production.up.railway.app',
     'https://*.up.railway.app',
+    'http://techgear-django-mongodb-production.up.railway.app:8080',
     'http://127.0.0.1:8000',
+    'http://127.0.0.1:8080',
     'http://localhost:8000',
+    'http://localhost:8080',
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',

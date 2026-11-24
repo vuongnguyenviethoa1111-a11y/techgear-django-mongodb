@@ -5,7 +5,8 @@ Tài liệu này được tổng hợp sát 100% với mã nguồn thực tế t
 ---
 
 ## 1. Giới thiệu đề tài & Lý do chọn đề tài
-- **Tên đề tài:** Xây dựng Website kinh doanh và quản lý Phụ kiện công nghệ, Đèn LED & Thiết bị thông minh (**TechGear LED & Smart Devices**) sử dụng Django Framework kết hợp MongoDB.
+- **Tên đề tài:** Xây dựng Website kinh doanh và quản lý Phụ kiện công nghệ, Đèn LED & Thiết bị thông minh (**TechGear LED & Smart Devices**) sử dụng Django Framework kết hợp MongoDB Atlas.
+- **Link triển khai thực tế (Railway Cloud - Port 8080):** https://techgear-django-mongodb-production.up.railway.app/
 - **Lý do chọn đề tài:**
   - Các mặt hàng công nghệ, đèn LED thông minh và thiết bị Smart Home có nhiều **thông số kỹ thuật đặc thù** (Mã SKU, Công suất tiêu thụ Watt, Điện áp hoạt động, Chuẩn kết nối Wi-Fi/Bluetooth/USB-C, Nhiệt độ màu Kelvin/RGB, Tuổi thọ giờ chiếu sáng) và yêu cầu quản lý **thời hạn bảo hành điện tử (12–24 tháng)** cùng **tồn kho thực tế**.
   - Kết hợp kiến trúc **MVT (Model – View – Template)** của Django với mô hình dữ liệu **Document/Collection của MongoDB (qua PyMongo)** giúp lưu trữ linh hoạt các thông số kỹ thuật dạng sub-document JSON mà vẫn tận dụng được hệ thống xác thực, phân quyền Admin và quản lý Session mạnh mẽ của Django.
