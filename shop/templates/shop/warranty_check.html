@@ -1,0 +1,44 @@
+{% extends 'shop/base.html' %}
+{% block title %}Tra cứu Bảo hành Điện tử - TechGear{% endblock %}
+
+{% block content %}
+<div class="card" style="border-top: 4px solid #0d9488; margin-bottom:24px;">
+  <h2 style="margin-bottom:8px; color:#0f172a;">🛡️ Tra cứu Bảo hành Điện tử &amp; Lịch sử Mua thiết bị</h2>
+  <p style="color:#475569; font-size:0.92rem; margin-bottom:14px;">
+    Nhập <strong>Số điện thoại mua hàng</strong> hoặc <strong>Mã đơn hàng</strong> để kiểm tra thời hạn bảo hành (12–24 tháng) của từng thiết bị Đèn LED / Phụ kiện thông minh.
+  </p>
+
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap;">
+    <input type="text" name="q" value="{{ keyword }}" placeholder="Nhập số điện thoại (VD: 0901234567) hoặc Mã đơn..." required style="flex:1; min-width:240px; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px;">
+    <button type="submit" class="btn btn-teal">Tra cứu ngay</button>
+  </form>
+</div>
+
+{% if keyword %}
+  {% for o in matched_orders %}
+  <div class="card" style="margin-bottom:14px; border-left: 5px solid #2563eb;">
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+      <strong style="color:#2563eb; font-size:1.05rem;">Phiếu bảo hành theo Đơn #{{ o.id }} — Ngày mua: {{ o.created_at|date:"d/m/Y H:i" }}</strong>
+      <span style="background:#ccfbf1; color:#0f766e; padding:3px 10px; border-radius:999px; font-size:0.82rem; font-weight:700;">
+        {{ o.get_status_display }}
+      </span>
+    </div>
+    <div style="font-size:0.88rem; color:#475569; margin-bottom:10px;">
+      Khách hàng: <strong>{{ o.full_name }}</strong> | SĐT: <strong>{{ o.phone }}</strong> | Thanh toán: {{ o.get_payment_method_display }}
+    </div>
+    <div style="background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #dbeafe;">
+      {% for it in o.items.all %}
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; padding:5px 0; border-bottom:1px dashed #e2e8f0; font-size:0.9rem;">
+        <span>• <strong>{{ it.product.name }}</strong> ({{ it.variant }}) x{{ it.quantity }}</span>
+        <span style="color:#0d9488; font-weight:700;">🛡️ Bảo hành chính hãng {{ it.warranty_months }} tháng</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="card">
+    Không tìm thấy thông tin bảo hành cho từ khóa <strong>"{{ keyword }}"</strong>. Vui lòng kiểm tra lại số điện thoại hoặc đặt thử một đơn hàng mới.
+  </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}

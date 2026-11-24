@@ -1,0 +1,100 @@
+{% extends 'shop/base.html' %}
+{% block title %}Thống kê Tồn kho, Doanh thu & MongoDB (techgear_db){% endblock %}
+
+{% block content %}
+<div class="card" style="border-top: 4px solid #2563eb; margin-bottom:22px;">
+  <h2 style="margin-bottom:6px;">📊 Bảng Thống kê Hệ thống &amp; Trạng thái MongoDB (<code>techgear_db</code>)</h2>
+  <p style="color:#475569; font-size:0.9rem;">
+    Trang tổng hợp số liệu Tồn kho, Doanh thu và số lượng Document trên đúng 6 Collections của database <code>techgear_db</code> phục vụ minh họa báo cáo đồ án.
+  </p>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:24px;">
+  <div class="card" style="border-top:4px solid #2563eb;">
+    <div style="font-size:0.82rem; color:#64748b;">Tổng mã thiết bị</div>
+    <div style="font-size:1.6rem; font-weight:800; color:#2563eb;">{{ total_products }}</div>
+  </div>
+  <div class="card" style="border-top:4px solid #0d9488;">
+    <div style="font-size:0.82rem; color:#64748b;">Tổng tồn kho hiện có</div>
+    <div style="font-size:1.6rem; font-weight:800; color:#0d9488;">{{ total_stock }} chiếc</div>
+  </div>
+  <div class="card" style="border-top:4px solid #ff5a36;">
+    <div style="font-size:0.82rem; color:#64748b;">Tổng số đơn hàng</div>
+    <div style="font-size:1.6rem; font-weight:800; color:#ff5a36;">{{ total_orders }} đơn</div>
+  </div>
+  <div class="card" style="border-top:4px solid #8b5cf6;">
+    <div style="font-size:0.82rem; color:#64748b;">Tổng doanh thu</div>
+    <div style="font-size:1.45rem; font-weight:800; color:#8b5cf6;">{{ total_revenue }} VNĐ</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1.1fr 0.9fr; gap:18px;">
+  <div class="card">
+    <h3 style="margin-bottom:10px; color:#0d9488;">🍃 Kết nối PyMongo (<code>MongoClient</code>) — Database: <code>{{ mongo_info.db_name }}</code></h3>
+    <p style="font-size:0.88rem; line-height:1.75; color:#334155;">
+      • <strong>Database Name:</strong> <code>{{ mongo_info.db_name }}</code><br>
+      • <strong>Trạng thái kết nối:</strong>
+      {% if mongo_info.connected %}
+        <span style="color:#0d9488; font-weight:700;">✓ Đã kết nối trực tiếp tới MongoDB (<code>{{ mongo_info.db_name }}</code>)</span>
+      {% else %}
+        <span style="color:#d97706; font-weight:700;">Chế độ Hybrid (Cập nhật MONGO_URI trong settings.py để nối MongoDB Atlas)</span>
+      {% endif %}
+    </p>
+
+    <h4 style="margin:12px 0 8px; font-size:0.92rem; color:#0f172a;">6 Collections chuẩn trong <code>techgear_db</code>:</h4>
+    <table style="width:100%; border-collapse:collapse; font-size:0.86rem;">
+      <thead>
+        <tr style="background:#eff6ff; color:#1e3a8a;">
+          <th style="padding:8px 10px; border:1px solid #dbeafe; text-align:left;">Tên Collection</th>
+          <th style="padding:8px 10px; border:1px solid #dbeafe; text-align:left;">Vai trò lưu trữ</th>
+          <th style="padding:8px 10px; border:1px solid #dbeafe; text-align:center;">Documents (Mongo)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;"><code>categories</code></td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;">Danh mục Đèn LED &amp; Thiết bị</td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe; text-align:center; font-weight:700;">{{ mongo_info.counts.categories }}</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;"><code>products</code></td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;">Thiết bị, thông số <code>specs</code>, tồn kho &amp; bảo hành</td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe; text-align:center; font-weight:700;">{{ mongo_info.counts.products }}</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;"><code>orders</code></td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;">Đơn đặt hàng &amp; SĐT kích hoạt bảo hành</td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe; text-align:center; font-weight:700;">{{ mongo_info.counts.orders }}</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;"><code>order_items</code></td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;">Chi tiết từng thiết bị &amp; hạn bảo hành trong đơn</td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe; text-align:center; font-weight:700;">{{ mongo_info.counts.order_items }}</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;"><code>reviews</code></td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;">Đánh giá sao &amp; nhận xét kỹ thuật</td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe; text-align:center; font-weight:700;">{{ mongo_info.counts.reviews }}</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;"><code>users</code></td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe;">Tài khoản Gmail khách hàng &amp; Admin</td>
+          <td style="padding:7px 10px; border:1px solid #dbeafe; text-align:center; font-weight:700;">{{ mongo_info.counts.users }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px; color:#e11d48;">⚠️ Cảnh báo Thiết bị Sắp hết hàng (Tồn kho &le; 10)</h3>
+    {% for p in low_stock_products %}
+      <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:0.88rem;">
+        <span><strong>[{{ p.sku }}]</strong> {{ p.name }}</span>
+        <strong style="color:#e11d48;">Còn {{ p.stock }} chiếc</strong>
+      </div>
+    {% empty %}
+      <p style="font-size:0.88rem; color:#0d9488;">✓ Tất cả thiết bị trong kho đều đảm bảo số lượng tồn kho an toàn (&gt; 10 chiếc).</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

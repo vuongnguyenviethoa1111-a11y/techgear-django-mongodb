@@ -1,0 +1,38 @@
+{% extends 'shop/base.html' %}
+{% block title %}Đơn hàng & Bảo hành của tôi - TechGear{% endblock %}
+{% block content %}
+<h2 style="margin-bottom:14px; color:#0f172a;">📋 Đơn hàng &amp; Thiết bị đã đặt</h2>
+{% for o in orders %}
+<div class="card" style="margin-bottom:14px; border-left: 5px solid #2563eb;">
+  <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+    <strong style="color:#2563eb; font-size:1.05rem;">Đơn hàng #{{ o.id }} — {{ o.created_at|date:"d/m/Y H:i" }}</strong>
+    <span style="background:#ccfbf1; color:#0f766e; padding:3px 10px; border-radius:999px; font-size:0.82rem; font-weight:700;">
+      {{ o.get_status_display }}
+    </span>
+  </div>
+  <div style="color:#64748b; font-size:0.88rem; margin-bottom:10px;">
+    Người nhận: <strong>{{ o.full_name }}</strong> | SĐT Bảo hành: <strong>{{ o.phone }}</strong> | Thanh toán: {{ o.get_payment_method_display }}<br>
+    Địa chỉ: {{ o.address }}
+  </div>
+  <div style="background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+    {% for it in o.items.all %}
+      <div style="font-size:0.9rem; padding:4px 0; display:flex; justify-content:space-between; flex-wrap:wrap;">
+        <span>• <strong>[{{ it.product.sku }}] {{ it.product.name }}</strong> ({{ it.variant }}) x{{ it.quantity }}</span>
+        <span>🛡️ BH {{ it.warranty_months }} tháng — <strong>{{ it.subtotal }} VNĐ</strong></span>
+      </div>
+    {% endfor %}
+  </div>
+  <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <span style="font-weight:800; color:#ff5a36; font-size:1.05rem;">Tổng thanh toán: {{ o.total_price }} VNĐ</span>
+    {% if o.status == 'pending' %}
+    <form method="post" action="{% url 'cancel_order' o.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn" style="color:#e11d48; border-color:#fecdd3;">Hủy đơn &amp; Hoàn kho</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% empty %}
+<div class="card">Bạn chưa có đơn hàng nào. <a href="{% url 'home' %}#products" style="color:#2563eb; font-weight:700;">Xem thiết bị ngay</a></div>
+{% endfor %}
+{% endblock %}

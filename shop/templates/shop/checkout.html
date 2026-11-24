@@ -1,0 +1,34 @@
+{% extends 'shop/base.html' %}
+{% block title %}Đặt hàng & Kích hoạt Bảo hành - TechGear{% endblock %}
+{% block content %}
+<div class="card" style="max-width:640px; margin:0 auto; border-top: 4px solid #2563eb;">
+  <h2 style="margin-bottom:14px; color:#0f172a;">📦 Thông tin Nhận hàng &amp; Kích hoạt Bảo hành Điện tử</h2>
+  <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+    {% csrf_token %}
+    <div>
+      <label style="display:block; font-size:0.88rem; font-weight:600; margin-bottom:4px;">Họ tên người nhận</label>
+      <input type="text" name="full_name" placeholder="Nhập họ tên khách hàng" value="{{ user.username }}" required style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px;">
+    </div>
+    <div>
+      <label style="display:block; font-size:0.88rem; font-weight:600; margin-bottom:4px;">Số điện thoại (Dùng để tra cứu Bảo hành điện tử)</label>
+      <input type="text" name="phone" placeholder="VD: 0901234567" required style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px;">
+    </div>
+    <div>
+      <label style="display:block; font-size:0.88rem; font-weight:600; margin-bottom:4px;">Địa chỉ giao thiết bị</label>
+      <textarea name="address" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố..." required style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit;"></textarea>
+    </div>
+    <div>
+      <label style="display:block; font-size:0.88rem; font-weight:600; margin-bottom:4px;">Phương thức thanh toán</label>
+      <select name="payment_method" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px;">
+        <option value="cod">Thanh toán khi nhận hàng (COD - Kiểm tra thiết bị trước khi trả tiền)</option>
+        <option value="banking">Chuyển khoản ngân hàng / Ví điện tử QR Pay</option>
+      </select>
+    </div>
+    <div style="background:#fff7ed; border:1px solid #fed7aa; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span>Tổng thanh toán (Đã gồm VAT &amp; Bảo hành chính hãng):</span>
+      <strong style="color:#ff5a36; font-size:1.18rem;">{{ cart.final_total }} VNĐ</strong>
+    </div>
+    <button type="submit" class="btn btn-coral" style="padding:11px; font-size:0.98rem;">✓ Xác nhận đặt hàng &amp; Lưu vào CSDL</button>
+  </form>
+</div>
+{% endblock %}

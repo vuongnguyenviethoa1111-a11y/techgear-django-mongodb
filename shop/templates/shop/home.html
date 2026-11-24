@@ -1,0 +1,365 @@
+{% extends 'shop/base.html' %}
+{% block title %}TechGear - Phụ kiện công nghệ, Đèn LED & Thiết bị thông minh{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1.45fr 0.95fr;
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+  .hero-main {
+    background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+    color: #ffffff;
+    border: none;
+  }
+  .hero-main h1 {
+    font-size: 1.9rem;
+    margin-bottom: 10px;
+    color: #ffffff;
+  }
+  .hero-main p {
+    color: #e0f2fe;
+    margin-bottom: 16px;
+    font-size: 0.96rem;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .hero-side {
+    background: #fff7ed;
+    border: 2px solid #fed7aa;
+  }
+  .hero-side h3 {
+    color: #c2410c;
+    margin-bottom: 8px;
+    font-size: 1.12rem;
+  }
+  .promo-chip {
+    display: inline-block;
+    background: #ff5a36;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+  .section-box {
+    margin-bottom: 30px;
+  }
+  .section-box h2 {
+    font-size: 1.32rem;
+    margin-bottom: 14px;
+    color: #f8fafc;
+    border-left: 5px solid #38bdf8;
+    padding-left: 10px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .feature-card-1 { border-top: 4px solid #38bdf8 !important; }
+  .feature-card-2 { border-top: 4px solid #2dd4bf !important; }
+  .feature-card-3 { border-top: 4px solid #ec4899 !important; }
+  .grid-3 h3 {
+    font-size: 1.04rem;
+    margin-bottom: 6px;
+    color: #f8fafc;
+  }
+  .grid-3 p {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+  }
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  input, select {
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: rgba(15, 23, 42, 0.9);
+    color: #f8fafc;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  }
+  .power-tool-card {
+    border: 1px solid rgba(45, 212, 191, 0.4) !important;
+  }
+  .power-box {
+    margin-top: 14px;
+    padding: 14px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #2dd4bf;
+    border-radius: 8px;
+    color: #f8fafc;
+  }
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 16px;
+  }
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .product-card img {
+    width: 100%;
+    height: 185px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #1e293b;
+  }
+  .badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .cat-tag {
+    display: inline-block;
+    background: rgba(37, 99, 235, 0.25);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    font-weight: 700;
+    font-size: 0.76rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .warranty-tag {
+    display: inline-block;
+    background: rgba(13, 148, 136, 0.25);
+    color: #2dd4bf;
+    border: 1px solid rgba(45, 212, 191, 0.35);
+    font-weight: 700;
+    font-size: 0.76rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .product-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #f8fafc;
+    text-decoration: none;
+  }
+  .product-title:hover {
+    color: #38bdf8;
+  }
+  .price {
+    font-size: 1.16rem;
+    font-weight: 800;
+    color: #f472b6;
+  }
+  .specs-mini-table {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.55;
+  }
+  .muted {
+    font-size: 0.84rem;
+    color: #94a3b8;
+  }
+  .add-form {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+  .faq-item + .faq-item {
+    margin-top: 10px;
+  }
+  @media (max-width: 850px) {
+    .hero, .grid-3, .product-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="card hero-main">
+    <span class="hero-badge">⚡ Hệ sinh thái Đèn LED RGB, Góc Setup PC &amp; Thiết bị Smart Home</span>
+    <h1>TechGear — Đèn LED RGB &amp; Thiết Bị Thông Minh</h1>
+    <p>
+      Nâng tầm góc làm việc, phòng gaming và ngôi nhà thông minh với hệ thống đèn LED RGBIC 16 triệu màu,
+      thanh đèn màn hình chống cận CRI &gt; 95, ổ cắm Wi-Fi đo điện năng và củ sạc nhanh GaN 65W thế hệ mới.
+    </p>
+    <div class="form-row">
+      <a href="#products" class="btn btn-coral">Khám phá thiết bị ngay</a>
+      <a href="#power-tool" class="btn">Tính công suất LED</a>
+      <a href="{% url 'warranty_check' %}" class="btn">Tra cứu bảo hành</a>
+    </div>
+  </div>
+
+  <div class="card hero-side">
+    <h3 style="color:#38bdf8;">🎁 Ưu đãi &amp; Cam kết chính hãng</h3>
+    <p style="font-size:0.9rem; color:#e2e8f0; line-height:1.72;">
+      • <strong>Voucher giảm 20%:</strong> Nhập mã <span class="promo-chip">TECH20</span> cho đèn LED &amp; phụ kiện<br>
+      • <strong>Voucher giảm 10%:</strong> Nhập mã <span class="promo-chip" style="background:#0d9488;">SMART10</span> cho thiết bị Smart Home<br>
+      • <strong>Bảo hành 12–24 tháng:</strong> 1 đổi 1 trong 30 ngày đầu nếu lỗi chip LED hoặc nguồn<br>
+      • <strong>Hỗ trợ kỹ thuật:</strong> Tư vấn chọn công suất Watt &amp; hướng dẫn kết nối App miễn phí
+    </p>
+  </div>
+</section>
+
+<section class="section-box">
+  <h2>Giải pháp Chiếu sáng &amp; Công nghệ nổi bật</h2>
+  <div class="grid-3">
+    <div class="card feature-card-1">
+      <h3 style="color:#38bdf8;">🌈 Ánh sáng RGBIC &amp; Chống cận CRI &gt; 95</h3>
+      <p>Chip LED thế hệ mới hiển thị 16 triệu màu rực rỡ, nháy theo nhạc thời gian thực và bảo vệ thị lực khi làm việc ban đêm.</p>
+    </div>
+    <div class="card feature-card-2">
+      <h3 style="color:#2dd4bf;">📱 Điều khiển Thông minh qua Wi-Fi &amp; App</h3>
+      <p>Tương thích Google Home, Alexa và ứng dụng điện thoại: hẹn giờ bật/tắt tự động, đo điện năng tiêu thụ (kWh) và cảm biến chuyển động.</p>
+    </div>
+    <div class="card feature-card-3">
+      <h3 style="color:#f472b6;">🛡️ Bảo hành Điện tử &amp; Giao nhanh Toàn quốc</h3>
+      <p>Kích hoạt bảo hành chính hãng 12–24 tháng trực tiếp theo Số điện thoại mua hàng, kiểm tra thiết bị trước khi thanh toán.</p>
+    </div>
+  </div>
+</section>
+
+<section class="card power-tool-card section-box" id="power-tool">
+  <h2 style="border-left-color:#0d9488;">💡 Công cụ tính Công suất Đèn LED &amp; Gợi ý Thiết bị theo Diện tích phòng</h2>
+  <p class="muted" style="margin-bottom:12px;">
+    Nhập diện tích phòng ($m^2$) và mục đích sử dụng để hệ thống tính tổng công suất LED (W), quang thông (Lumens) và gợi ý thiết bị phù hợp.
+  </p>
+  <form method="get" class="form-row">
+    {% if selected_cat %}<input type="hidden" name="category" value="{{ selected_cat }}">{% endif %}
+    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+    {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+
+    <input type="number" step="0.5" name="area" min="2" max="150" placeholder="Diện tích phòng (m²)" value="{{ power_result.area|default:'' }}" required>
+    <select name="room_type">
+      <option value="work" {% if power_result.room_type == 'work' %}selected{% endif %}>Phòng làm việc / Góc Setup PC - Gaming</option>
+      <option value="bedroom" {% if power_result.room_type == 'bedroom' %}selected{% endif %}>Phòng ngủ / Góc thư giãn (Ánh sáng ấm)</option>
+      <option value="living" {% if power_result.room_type == 'living' %}selected{% endif %}>Phòng khách / Studio sáng tạo</option>
+    </select>
+    <button type="submit" class="btn btn-teal">Tính công suất LED</button>
+  </form>
+
+  {% if power_result %}
+  <div class="power-box">
+    <strong style="color:#0d9488; font-size:1.05rem;">
+      ✓ Gợi ý kỹ thuật: Tổng công suất ~ {{ power_result.recommended_watt }}W (Quang thông ~ {{ power_result.lumens }} Lumens)
+    </strong>
+    <div style="font-size:0.88rem; margin-top:4px;">
+      • Không gian: <strong>{{ power_result.area }} m²</strong> — {{ power_result.room_label }}<br>
+      • Cấu hình thiết bị đề xuất: <strong>{{ power_result.suggestion }}</strong>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section class="section-box" id="products">
+  <h2>Danh mục Phụ kiện Công nghệ, Đèn LED &amp; Thiết bị thông minh</h2>
+
+  <form method="get" action="#products" class="card form-row" style="background:#eff6ff; border-color:#bfdbfe;">
+    <input type="text" name="q" placeholder="Tìm tên thiết bị, mã SKU, Wi-Fi, Zigbee, USB-C, công suất..." value="{{ query }}" style="flex:1; min-width:220px;">
+    <select name="category">
+      <option value="">Tất cả danh mục</option>
+      {% for cat in categories %}
+        <option value="{{ cat.slug }}" {% if selected_cat == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="sort">
+      <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+      <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá: Thấp đến Cao</option>
+      <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá: Cao đến Thấp</option>
+      <option value="warranty_desc" {% if sort == 'warranty_desc' %}selected{% endif %}>Bảo hành lâu nhất</option>
+    </select>
+    <button type="submit" class="btn btn-cobalt">Lọc thiết bị</button>
+    <a href="{% url 'home' %}#products" class="btn">Xóa lọc</a>
+  </form>
+
+  <div class="product-grid">
+    {% for p in products %}
+    <div class="card product-card">
+      <a href="{% url 'product_detail' p.id %}">
+        <img src="{{ p.display_image }}" alt="{{ p.name }}">
+      </a>
+      <div class="badge-row">
+        <span class="cat-tag">{{ p.category.name }}</span>
+        <span class="warranty-tag">🛡️ BH {{ p.warranty_months }} tháng</span>
+      </div>
+      <a href="{% url 'product_detail' p.id %}" class="product-title">{{ p.name }}</a>
+      <div class="price">{{ p.price }} VNĐ</div>
+
+      <div class="specs-mini-table">
+        <div><strong>SKU:</strong> {{ p.sku }} | <strong>Hãng:</strong> {{ p.brand }}</div>
+        <div><strong>Công suất:</strong> {{ p.power_watt }}W | <strong>Điện áp:</strong> {{ p.voltage }}</div>
+        <div><strong>Kết nối:</strong> {{ p.connectivity }}</div>
+        <div><strong>Ánh sáng/Màu:</strong> {{ p.color_temp }}</div>
+      </div>
+
+      <div class="muted" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Tồn kho: <strong style="color:{% if p.stock > 5 %}#0d9488{% else %}#e11d48{% endif %};">{{ p.stock }} chiếc</strong></span>
+        <a href="{% url 'product_detail' p.id %}" style="color:#2563eb; font-weight:700; text-decoration:none;">Chi tiết thông số →</a>
+      </div>
+
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'add_to_cart' p.id %}" class="add-form">
+        {% csrf_token %}
+        <select name="variant" style="max-width:135px;">
+          {% for v in p.variant_list %}
+            <option value="{{ v }}">{{ v }}</option>
+          {% endfor %}
+        </select>
+        <input type="number" name="quantity" value="1" min="1" max="{{ p.stock|default:10 }}" style="width:58px;">
+        <button type="submit" class="btn btn-coral" style="flex:1;" {% if p.stock == 0 %}disabled{% endif %}>
+          {% if p.stock > 0 %}+ Thêm giỏ{% else %}Hết hàng{% endif %}
+        </button>
+      </form>
+      {% else %}
+      <div class="add-form">
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-cobalt" style="width:100%; text-align:center;">
+          🔒 Đăng nhập để mua hàng
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="card" style="grid-column: 1 / -1;">
+      Chưa có thiết bị nào. Bạn chạy lệnh <code>python seed_data.py</code> hoặc vào trang <strong>/admin/</strong> để thêm thiết bị.
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section-box">
+  <h2>Câu hỏi thường gặp (Hỗ trợ kỹ thuật &amp; Bảo hành)</h2>
+  <div class="card faq-item" style="border-left: 4px solid #2563eb;">
+    <strong>1. Làm sao để kiểm tra thông số kỹ thuật và thời hạn bảo hành của thiết bị?</strong>
+    <p class="muted">Mỗi sản phẩm đều hiển thị bảng thông số (Công suất W, Điện áp, Chuẩn kết nối, Tuổi thọ LED) và hạn bảo hành 12–24 tháng. Khách đã mua có thể tra cứu trực tiếp tại mục <strong>Tra cứu Bảo hành</strong> bằng Số điện thoại hoặc Mã đơn hàng.</p>
+  </div>
+  <div class="card faq-item" style="border-left: 4px solid #0d9488;">
+    <strong>2. Đèn LED thông minh và ổ cắm Wi-Fi kết nối với điện thoại như thế nào?</strong>
+    <p class="muted">Các thiết bị sử dụng chuẩn Wi-Fi 2.4GHz và Bluetooth 5.2, chỉ cần tải ứng dụng điều khiển trên iOS/Android hoặc liên kết Google Home để bật/tắt, hẹn giờ và đổi màu từ xa.</p>
+  </div>
+</section>
+{% endblock %}

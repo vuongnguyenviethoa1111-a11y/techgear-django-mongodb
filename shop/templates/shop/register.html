@@ -1,0 +1,18 @@
+{% extends 'shop/base.html' %}
+{% block title %}Đăng ký - ShopQuanAo{% endblock %}
+{% block content %}
+<div class="card" style="max-width:420px; margin:0 auto; border-top: 4px solid #0d9488;">
+  <h2 style="margin-bottom:14px; color:#0f172a;">✨ Đăng ký tài khoản mới</h2>
+  <form method="post" style="display:flex; flex-direction:column; gap:12px;">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next|default:'/' }}">
+    <input type="email" name="email" placeholder="Nhập Gmail / Email của bạn" required style="padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px;">
+    <input type="password" name="password" placeholder="Mật khẩu" required style="padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px;">
+    <input type="password" name="confirm_password" placeholder="Nhập lại mật khẩu" required style="padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px;">
+    <button type="submit" class="btn btn-teal" style="padding:10px;">Tạo tài khoản</button>
+  </form>
+  <p style="margin-top:12px; font-size:0.86rem; color:#64748b; text-align:center;">
+    Đã có tài khoản? <a href="{% url 'login' %}" style="color:#2563eb; font-weight:700;">Đăng nhập ngay</a>
+  </p>
+</div>
+{% endblock %}

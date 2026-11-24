@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TechGear LED & Smart Devices - Phụ kiện công nghệ (Django + MongoDB)</title>
+  <style>
+    :root {
+      --bg-page: #f0f6ff;
+      --surface: #ffffff;
+      --border: #dbeafe;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --cobalt: #2563eb;
+      --cobalt-hover: #1d4ed8;
+      --coral: #ff5a36;
+      --coral-hover: #ea431f;
+      --teal: #0d9488;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 50%, #fff7ed 100%);
+      color: var(--text-main);
+      line-height: 1.55;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      width: min(1140px, 92%);
+      margin: 0 auto;
+    }
+    .top-promo-bar {
+      background: linear-gradient(90deg, var(--cobalt) 0%, var(--teal) 50%, var(--coral) 100%);
+      color: #ffffff;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 12px;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 2px solid var(--border);
+      padding: 13px 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.06);
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.32rem;
+      font-weight: 800;
+      color: var(--cobalt);
+      text-decoration: none;
+    }
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--coral);
+      display: inline-block;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      border-color: var(--cobalt);
+      color: var(--cobalt);
+      background: #eff6ff;
+    }
+    .btn-cobalt {
+      background: var(--cobalt);
+      color: #ffffff;
+      border-color: var(--cobalt);
+    }
+    .btn-cobalt:hover {
+      background: var(--cobalt-hover);
+      border-color: var(--cobalt-hover);
+      color: #ffffff;
+    }
+    .btn-coral {
+      background: var(--coral);
+      color: #ffffff;
+      border-color: var(--coral);
+    }
+    .btn-coral:hover {
+      background: var(--coral-hover);
+      border-color: var(--coral-hover);
+      color: #ffffff;
+    }
+    .btn-teal {
+      background: var(--teal);
+      color: #ffffff;
+      border-color: var(--teal);
+    }
+    .btn-teal:hover {
+      background: #0f766e;
+      border-color: #0f766e;
+      color: #ffffff;
+    }
+    main {
+      flex: 1;
+      padding: 26px 0 48px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    }
+    .alert {
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-left: 5px solid var(--teal);
+      color: #065f46;
+      padding: 11px 15px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.45fr 0.95fr;
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+    .hero-main {
+      background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
+      color: #ffffff;
+      border: none;
+    }
+    .hero-main h1 {
+      font-size: 1.9rem;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+    .hero-main p {
+      color: #e0f2fe;
+      margin-bottom: 16px;
+      font-size: 0.96rem;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .hero-side {
+      background: #fff7ed;
+      border: 2px solid #fed7aa;
+    }
+    .hero-side h3 {
+      color: #c2410c;
+      margin-bottom: 8px;
+      font-size: 1.12rem;
+    }
+    .promo-chip {
+      display: inline-block;
+      background: #ff5a36;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .section-box { margin-bottom: 30px; }
+    .section-box h2 {
+      font-size: 1.32rem;
+      margin-bottom: 14px;
+      color: #0f172a;
+      border-left: 5px solid #2563eb;
+      padding-left: 10px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .feature-card-1 { border-top: 4px solid #2563eb; }
+    .feature-card-2 { border-top: 4px solid #0d9488; }
+    .feature-card-3 { border-top: 4px solid #ff5a36; }
+    .grid-3 h3 {
+      font-size: 1.02rem;
+      margin-bottom: 6px;
+    }
+    .grid-3 p {
+      font-size: 0.9rem;
+      color: #475569;
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    input, select {
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #ffffff;
+      color: #0f172a;
+      font-family: inherit;
+    }
+    .power-tool-card {
+      background: linear-gradient(135deg, #f0fdfa 0%, #eff6ff 100%);
+      border: 2px solid #99f6e4;
+    }
+    .power-box {
+      margin-top: 14px;
+      padding: 14px;
+      background: #ffffff;
+      border: 2px solid #0d9488;
+      border-radius: 8px;
+      display: none;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 16px;
+    }
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.1);
+      border-color: #93c5fd;
+    }
+    .product-card img {
+      width: 100%;
+      height: 185px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #e0f2fe;
+    }
+    .badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .cat-tag {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 0.76rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .warranty-tag {
+      display: inline-block;
+      background: #ccfbf1;
+      color: #0f766e;
+      font-weight: 700;
+      font-size: 0.76rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .product-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .price {
+      font-size: 1.14rem;
+      font-weight: 800;
+      color: #ff5a36;
+    }
+    .specs-mini-table {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      color: #334155;
+      line-height: 1.55;
+    }
+    .muted {
+      font-size: 0.84rem;
+      color: #64748b;
+    }
+    .add-form {
+      display: flex;
+      gap: 6px;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    footer {
+      background: #ffffff;
+      border-top: 2px solid var(--border);
+      padding: 20px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.86rem;
+    }
+    @media (max-width: 850px) {
+      .hero, .grid-3, .product-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-promo-bar">
+    💡 Chuyên Đèn LED RGB, Thiết bị Smart Home &amp; Phụ kiện IT — Mã <strong>TECH20</strong> (-20%) • <strong>SMART10</strong> (-10%) • Bảo hành chính hãng 12–24 tháng!
+  </div>
+  <header>
+    <div class="container nav">
+      <a href="#" class="brand">
+        <span class="brand-dot"></span>
+        <span>TechGear LED &amp; Smart</span>
+      </a>
+      <div class="nav-links">
+        <a href="#products" class="btn">Thiết bị &amp; LED</a>
+        <a href="#power-tool" class="btn">Tính công suất LED</a>
+        <a href="#mongo-section" class="btn">Kiến trúc MongoDB</a>
+        <a href="#cart-section" class="btn btn-coral">Giỏ hàng (<span id="navCartCount">0</span>)</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div id="alertBox" class="alert"></div>
+
+      <section class="hero">
+        <div class="card hero-main">
+          <span class="hero-badge">⚡ Hệ thống Quản lý Phụ kiện Công nghệ, Đèn LED &amp; Smart Home</span>
+          <h1>TechGear — Đèn LED RGB &amp; Thiết Bị Thông Minh</h1>
+          <p>
+            Quản lý tập trung thông số kỹ thuật (Công suất W, Điện áp, Chuẩn kết nối Wi-Fi/Bluetooth/Zigbee, Nhiệt độ màu),
+            phân loại danh mục, kiểm soát tồn kho thực tế và kích hoạt bảo hành điện tử 12–24 tháng.
+          </p>
+          <div class="form-row">
+            <a href="#products" class="btn btn-coral">Xem thiết bị &amp; thông số</a>
+            <a href="#power-tool" class="btn">Tính công suất LED</a>
+          </div>
+        </div>
+
+        <div class="card hero-side">
+          <h3>🛠️ Kiến trúc Đồ án Django + MongoDB</h3>
+          <p style="font-size:0.88rem; color:#475569; line-height:1.68;">
+            • <strong>Mô hình:</strong> Django MVT + PyMongo (<code>MongoClient</code>)<br>
+            • <strong>6 Collections:</strong> <code>categories</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>, <code>reviews</code>, <code>users</code><br>
+            • <strong>Mã ưu đãi:</strong> <span class="promo-chip">TECH20</span> (-20%) • <span class="promo-chip" style="background:#0d9488;">SMART10</span> (-10%)<br>
+            • <strong>Bảo hành &amp; Tồn kho:</strong> Tự động trừ kho khi đặt đơn &amp; hoàn kho khi hủy đơn.
+          </p>
+        </div>
+      </section>
+
+      <section class="section-box">
+        <h2>Chức năng cốt lõi của hệ thống</h2>
+        <div class="grid-3">
+          <div class="card feature-card-1">
+            <h3 style="color:#2563eb;">1. Quản lý Thông số kỹ thuật</h3>
+            <p>Lưu trữ chi tiết SKU, Công suất (W), Điện áp, Kết nối (Wi-Fi/Zigbee/USB-C), Nhiệt độ màu (Kelvin/RGB) và Tuổi thọ (giờ).</p>
+          </div>
+          <div class="card feature-card-2">
+            <h3 style="color:#0d9488;">2. Kiểm soát Tồn kho &amp; Bảo hành</h3>
+            <p>Theo dõi số lượng tồn kho theo thời gian thực, chặn đặt vượt tồn kho và tra cứu hạn bảo hành điện tử 12–24 tháng.</p>
+          </div>
+          <div class="card feature-card-3">
+            <h3 style="color:#ff5a36;">3. Đồng bộ Django &amp; MongoDB</h3>
+            <p>Kết hợp Django ORM/Session với PyMongo để đồng bộ document JSON linh hoạt cho thông số kỹ thuật và đánh giá sản phẩm.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card power-tool-card section-box" id="power-tool">
+        <h2 style="border-left-color:#0d9488;">💡 Công cụ tính Công suất Đèn LED &amp; Gợi ý Thiết bị theo Diện tích phòng</h2>
+        <p class="muted" style="margin-bottom:12px;">
+          Nhập diện tích phòng (m²) và mục đích sử dụng để hệ thống tính tổng công suất LED (W), quang thông (Lumens) và gợi ý thiết bị.
+        </p>
+        <form id="powerForm" class="form-row">
+          <input type="number" step="0.5" id="areaInput" min="2" max="150" placeholder="Diện tích phòng (m²)" value="15" required>
+          <select id="roomInput">
+            <option value="work">Phòng làm việc / Góc Setup PC - Gaming</option>
+            <option value="bedroom">Phòng ngủ / Góc thư giãn (Ánh sáng ấm)</option>
+            <option value="living">Phòng khách / Studio sáng tạo</option>
+          </select>
+          <button type="submit" class="btn btn-teal">Tính công suất LED</button>
+        </form>
+        <div class="power-box" id="powerResultBox"></div>
+      </section>
+
+      <section class="section-box" id="products">
+        <h2>Danh mục Phụ kiện Công nghệ, Đèn LED &amp; Thiết bị thông minh</h2>
+        <div class="card form-row" style="background:#eff6ff; border-color:#bfdbfe;">
+          <input type="text" id="searchInput" placeholder="Tìm tên thiết bị, mã SKU, Wi-Fi, USB-C, công suất..." style="flex:1; min-width:220px;">
+          <select id="categorySelect">
+            <option value="">Tất cả danh mục</option>
+            <option value="Đèn LED Thông Minh">Đèn LED Thông Minh</option>
+            <option value="Đèn Bàn & Góc Setup PC">Đèn Bàn &amp; Góc Setup PC</option>
+            <option value="Thiết Bị Smart Home">Thiết Bị Smart Home</option>
+            <option value="Phụ Kiện Công Nghệ IT">Phụ Kiện Công Nghệ IT</option>
+          </select>
+          <select id="sortSelect">
+            <option value="newest">Mới nhất</option>
+            <option value="price_asc">Giá: Thấp đến Cao</option>
+            <option value="price_desc">Giá: Cao đến Thấp</option>
+            <option value="warranty_desc">Bảo hành lâu nhất</option>
+          </select>
+          <button type="button" id="resetFilterBtn" class="btn">Xóa lọc</button>
+        </div>
+
+        <div class="product-grid" id="productGrid"></div>
+      </section>
+
+      <section class="section-box" id="cart-section">
+        <div class="card" style="border-top: 4px solid #ff5a36;">
+          <h2 style="margin-bottom:14px; border-left-color:#ff5a36;">🛒 Giỏ hàng Thiết bị &amp; Đèn LED</h2>
+          <div id="cartItemsContainer"></div>
+
+          <div style="display:flex; gap:8px; margin:18px 0; flex-wrap:wrap; background:#f0fdfa; padding:12px; border-radius:10px; border:1px solid #99f6e4;">
+            <input type="text" id="promoInput" placeholder="Nhập mã ưu đãi (TECH20 giảm 20%, SMART10 giảm 10%)" style="flex:1; min-width:220px;">
+            <button type="button" id="applyPromoBtn" class="btn btn-teal">Áp dụng mã</button>
+          </div>
+
+          <div style="border-top:2px dashed #dbeafe; padding-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="line-height:1.7;">
+              <div>Tạm tính: <strong id="subtotalText">0 VNĐ</strong></div>
+              <div style="color:#0d9488;">Giảm giá: <strong id="discountText">-0 VNĐ</strong></div>
+              <div style="font-size:1.2rem; font-weight:800; color:#ff5a36;">Thành tiền: <span id="finalTotalText">0 VNĐ</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-box" id="mongo-section">
+        <h2>Cấu trúc 6 Collections MongoDB (PyMongo) phục vụ Báo cáo</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3 style="color:#2563eb;">1. categories &amp; products</h3>
+            <p>Lưu phân loại danh mục và document thiết bị kèm sub-document <code>specs</code> (power_watt, voltage, connectivity, color_temp, lifespan_hours), <code>warranty_months</code> và <code>stock</code>.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#0d9488;">2. orders &amp; order_items</h3>
+            <p>Lưu thông tin khách hàng, SĐT kích hoạt bảo hành, phương thức thanh toán COD/QR, mã giảm giá và danh sách thiết bị đã mua.</p>
+          </div>
+          <div class="card">
+            <h3 style="color:#ff5a36;">3. reviews &amp; users</h3>
+            <p>Lưu tài khoản người dùng/quản trị viên và các đánh giá trải nghiệm kỹ thuật (số sao 1-5, nhận xét độ sáng/kết nối).</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <strong>TechGear LED &amp; Smart Devices</strong> — Đồ án môn học Lập trình Web với <strong>Django (MVT) + MongoDB (PyMongo)</strong>
+    </div>
+  </footer>
+
+  <script>
+    const PRODUCTS = [
+      { id: 1, sku: 'TG-LED-RGB05', name: 'Cuộn Dây Đèn LED RGBIC 5m Đồng Bộ Nhạc Wi-Fi', category: 'Đèn LED Thông Minh', brand: 'TechGear Light', price: 349000, warranty: 18, stock: 35, watt: 24, voltage: 'Adapter DC 12V / 2A', conn: 'Wi-Fi 2.4GHz + Bluetooth 5.2', colorTemp: 'RGBIC 16 triệu màu + Mic nhạc', variants: ['Cuộn 5m (24W)', 'Cuộn 10m Pro (36W)'], image: 'https://placehold.co/600x400/2563eb/ffffff?text=Day+LED+RGBIC+5m' },
+      { id: 2, sku: 'TG-BULB-W12', name: 'Bóng Đèn LED Smart Bulb E27 Đổi Màu Wi-Fi 12W', category: 'Đèn LED Thông Minh', brand: 'LumiSmart', price: 189000, warranty: 24, stock: 50, watt: 12, voltage: 'AC 220V (Đui E27)', conn: 'Wi-Fi 2.4GHz (Google Home/Alexa)', colorTemp: 'RGB + 2700K - 6500K', variants: ['Bóng 9W', 'Bóng 12W Siêu Sáng'], image: 'https://placehold.co/600x400/0d9488/ffffff?text=Smart+LED+Bulb+12W' },
+      { id: 3, sku: 'TG-BAR-PC01', name: 'Thanh Đèn LED Treo Màn Hình PC Chống Cận Asymmetric', category: 'Đèn Bàn & Góc Setup PC', brand: 'TechGear Desk', price: 490000, warranty: 18, stock: 22, watt: 10, voltage: 'USB Type-C 5V / 2A', conn: 'Núm xoay không dây 2.4GHz', colorTemp: '2900K - 4200K - 6500K (CRI>95)', variants: ['Bản Cảm Ứng', 'Bản Núm Xoay Không Dây'], image: 'https://placehold.co/600x400/ff5a36/ffffff?text=Den+Treo+Man+Hinh+PC' },
+      { id: 4, sku: 'TG-AMB-BAR2', name: 'Cặp Đèn LED Ambiance Đặt Bàn Đồng Bộ Màn Hình PC', category: 'Đèn Bàn & Góc Setup PC', brand: 'TechGear Light', price: 560000, warranty: 12, stock: 16, watt: 15, voltage: 'USB-C 5V / Adapter 12V', conn: 'USB-C Sync PC + Bluetooth App', colorTemp: 'RGBIC Ambilight theo màn hình', variants: ['Bộ 2 Thanh Đứng', 'Bộ 2 Thanh + Hub Sync'], image: 'https://placehold.co/600x400/8b5cf6/ffffff?text=LED+Ambiance+Setup+PC' },
+      { id: 5, sku: 'TG-PLUG-W20', name: 'Ổ Cắm Thông Minh Wi-Fi Đo Công Suất Tiêu Thụ Điện 20A', category: 'Thiết Bị Smart Home', brand: 'SmartLife Tech', price: 210000, warranty: 12, stock: 45, watt: 4400, voltage: 'AC 100-240V ~ Max 20A', conn: 'Wi-Fi 2.4GHz + Bluetooth', colorTemp: 'Đèn báo trạng thái LED', variants: ['Bản 16A Tiêu Chuẩn', 'Bản 20A Đo Điện Năng'], image: 'https://placehold.co/600x400/0284c7/ffffff?text=O+Cam+WiFi+Smart+20A' },
+      { id: 6, sku: 'TG-SENS-PIR1', name: 'Đèn LED Cảm Biến Chuyển Động Hồng Ngoại PIR Pin Sạc Type-C', category: 'Thiết Bị Smart Home', brand: 'LumiSmart', price: 165000, warranty: 12, stock: 8, watt: 5, voltage: 'Pin 2000mAh (Sạc USB-C)', conn: 'Cảm biến PIR 120° + Ánh sáng', colorTemp: 'Trắng ấm 3000K / 4500K', variants: ['Thanh 30cm', 'Thanh 50cm Pin Lớn'], image: 'https://placehold.co/600x400/f59e0b/ffffff?text=Den+Cam+Bien+PIR' },
+      { id: 7, sku: 'TG-GAN-65W', name: 'Củ Sạc Nhanh GaN 65W 3 Cổng Có Màn Hình LED Báo Watt', category: 'Phụ Kiện Công Nghệ IT', brand: 'TechGear Power', price: 440000, warranty: 24, stock: 28, watt: 65, voltage: 'AC 100-240V / PD 20V-3.25A', conn: '2 USB-C PD 3.0 + 1 USB-A QC', colorTemp: 'Màn hình LED hiển thị số W', variants: ['Bản 65W GaN', 'Bản 65W + Cáp 100W'], image: 'https://placehold.co/600x400/1e40af/ffffff?text=Sac+GaN+65W+LED+Watt' },
+      { id: 8, sku: 'TG-HUB-8IN1', name: 'Hub Chuyển Đổi Type-C 8-in-1 (HDMI 4K, LAN Gigabit, PD 100W)', category: 'Phụ Kiện Công Nghệ IT', brand: 'TechGear Pro', price: 520000, warranty: 18, stock: 19, watt: 100, voltage: 'USB-C PD Pass-through 100W', conn: 'HDMI 4K@60Hz, LAN 1Gbps, USB 3.2', colorTemp: 'Vỏ nhôm CNC + LED báo nguồn', variants: ['Bản 6-in-1', 'Bản 8-in-1 LAN Gigabit'], image: 'https://placehold.co/600x400/14b8a6/ffffff?text=Hub+Type-C+8in1' }
+    ];
+
+    const VALID_PROMOS = { 'TECH20': 0.20, 'SMART10': 0.10 };
+    let cart = JSON.parse(localStorage.getItem('techgear_cart') || '[]');
+    let activePromo = localStorage.getItem('techgear_promo') || '';
+
+    function showMessage(msg) {
+      const box = document.getElementById('alertBox');
+      box.textContent = msg;
+      box.style.display = 'block';
+      setTimeout(() => { box.style.display = 'none'; }, 3600);
+    }
+
+    function formatMoney(n) {
+      return Number(n).toLocaleString('vi-VN') + ' VNĐ';
+    }
+
+    function renderProducts() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const cat = document.getElementById('categorySelect').value;
+      const sort = document.getElementById('sortSelect').value;
+
+      let list = PRODUCTS.filter(p => {
+        const matchCat = !cat || p.category === cat;
+        const matchQ = !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.conn.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+
+      if (sort === 'price_asc') list.sort((a, b) => a.price - b.price);
+      else if (sort === 'price_desc') list.sort((a, b) => b.price - a.price);
+      else if (sort === 'warranty_desc') list.sort((a, b) => b.warranty - a.warranty);
+
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = list.map(p => `
+        <div class="card product-card">
+          <img src="${p.image}" alt="${p.name}">
+          <div class="badge-row">
+            <span class="cat-tag">${p.category}</span>
+            <span class="warranty-tag">🛡️ BH ${p.warranty} tháng</span>
+          </div>
+          <div class="product-title">${p.name}</div>
+          <div class="price">${formatMoney(p.price)}</div>
+          <div class="specs-mini-table">
+            <div><strong>SKU:</strong> ${p.sku} | <strong>Hãng:</strong> ${p.brand}</div>
+            <div><strong>Công suất:</strong> ${p.watt}W | <strong>Điện áp:</strong> ${p.voltage}</div>
+            <div><strong>Kết nối:</strong> ${p.conn}</div>
+            <div><strong>Ánh sáng/Màu:</strong> ${p.colorTemp}</div>
+          </div>
+          <div class="muted">Tồn kho: <strong style="color:${p.stock > 10 ? '#0d9488' : '#e11d48'};">${p.stock} chiếc</strong></div>
+          <div class="add-form">
+            <select id="var_${p.id}" style="max-width:140px;">
+              ${p.variants.map(v => `<option value="${v}">${v}</option>`).join('')}
+            </select>
+            <input type="number" id="qty_${p.id}" value="1" min="1" max="${p.stock}" style="width:58px;">
+            <button type="button" class="btn btn-coral" style="flex:1;" onclick="addToCart(${p.id})">+ Thêm giỏ</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.addToCart = function(productId) {
+      const p = PRODUCTS.find(x => x.id === productId);
+      const variant = document.getElementById('var_' + productId).value;
+      const qty = Math.max(1, parseInt(document.getElementById('qty_' + productId).value || '1', 10));
+      const key = productId + '_' + variant;
+      const existing = cart.find(x => x.key === key);
+      const currentQty = existing ? existing.quantity : 0;
+      if (currentQty + qty > p.stock) {
+        showMessage(`⚠️ Số lượng vượt quá tồn kho (${p.stock} chiếc).`);
+        return;
+      }
+      if (existing) existing.quantity += qty;
+      else cart.push({ key, product: p, variant, quantity: qty });
+      localStorage.setItem('techgear_cart', JSON.stringify(cart));
+      renderCart();
+      showMessage(`✓ Đã thêm [${p.sku}] ${p.name} (${variant} • BH ${p.warranty} tháng) vào giỏ.`);
+    };
+
+    window.changeCart = function(key, action) {
+      const idx = cart.findIndex(x => x.key === key);
+      if (idx === -1) return;
+      if (action === 'inc') {
+        if (cart[idx].quantity + 1 > cart[idx].product.stock) {
+          showMessage(`⚠️ Tồn kho chỉ còn tối đa ${cart[idx].product.stock} chiếc.`);
+          return;
+        }
+        cart[idx].quantity += 1;
+      } else if (action === 'dec') {
+        cart[idx].quantity -= 1;
+        if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+      } else if (action === 'remove') cart.splice(idx, 1);
+      localStorage.setItem('techgear_cart', JSON.stringify(cart));
+      renderCart();
+    };
+
+    function renderCart() {
+      const container = document.getElementById('cartItemsContainer');
+      const count = cart.reduce((s, i) => s + i.quantity, 0);
+      document.getElementById('navCartCount').textContent = count;
+
+      if (cart.length === 0) {
+        container.innerHTML = '<p class="muted">Giỏ hàng hiện đang trống.</p>';
+      } else {
+        container.innerHTML = cart.map(item => `
+          <div style="border:1px solid #dbeafe; background:#f8fafc; border-radius:10px; padding:14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <strong>[${item.product.sku}] ${item.product.name}</strong>
+              <span style="display:inline-block; background:#e0f2fe; color:#1d4ed8; font-weight:700; font-size:0.76rem; padding:2px 8px; border-radius:999px; margin-left:6px;">${item.variant}</span>
+              <span style="display:inline-block; background:#ccfbf1; color:#0f766e; font-weight:700; font-size:0.76rem; padding:2px 8px; border-radius:999px; margin-left:4px;">🛡️ BH ${item.product.warranty} tháng</span><br>
+              <span class="muted">Đơn giá: ${formatMoney(item.product.price)} | Công suất: ${item.product.watt}W</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button class="btn" onclick="changeCart('${item.key}','dec')">-</button>
+              <span style="padding:0 8px; font-weight:800; color:#2563eb;">${item.quantity}</span>
+              <button class="btn" onclick="changeCart('${item.key}','inc')">+</button>
+              <button class="btn" style="color:#e11d48; border-color:#fecdd3;" onclick="changeCart('${item.key}','remove')">Xóa</button>
+              <strong style="min-width:115px; text-align:right; color:#ff5a36;">${formatMoney(item.product.price * item.quantity)}</strong>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
+      const rate = VALID_PROMOS[activePromo] || 0;
+      const discount = Math.round(subtotal * rate);
+      document.getElementById('subtotalText').textContent = formatMoney(subtotal);
+      document.getElementById('discountText').textContent = '-' + formatMoney(discount);
+      document.getElementById('finalTotalText').textContent = formatMoney(Math.max(0, subtotal - discount));
+      document.getElementById('promoInput').value = activePromo;
+    }
+
+    document.getElementById('applyPromoBtn').addEventListener('click', () => {
+      const code = document.getElementById('promoInput').value.trim().toUpperCase();
+      if (VALID_PROMOS[code]) {
+        activePromo = code;
+        showMessage(`🎉 Đã áp dụng mã ${code} (giảm ${VALID_PROMOS[code] * 100}%).`);
+      } else {
+        activePromo = '';
+        showMessage('Mã giảm giá không hợp lệ. Thử mã TECH20 hoặc SMART10.');
+      }
+      localStorage.setItem('techgear_promo', activePromo);
+      renderCart();
+    });
+
+    document.getElementById('powerForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const area = parseFloat(document.getElementById('areaInput').value);
+      const room = document.getElementById('roomInput').value;
+      const factors = { bedroom: 1.2, work: 1.8, living: 2.2 };
+      const watt = Math.max(5, Math.round(area * (factors[room] || 1.8)));
+      const lumens = watt * 95;
+      let sug = 'Phù hợp Đèn bàn LED chống cận, Đèn cảm biến PIR hoặc Dây LED RGB 5m (10W - 24W).';
+      if (watt > 24) sug = 'Phù hợp Combo Dây LED RGBIC 10m + Bóng Smart Bulb 12W + Ổ cắm Wi-Fi 20A.';
+      const box = document.getElementById('powerResultBox');
+      box.style.display = 'block';
+      box.innerHTML = `<strong style="color:#0d9488; font-size:1.05rem;">✓ Gợi ý kỹ thuật: Tổng công suất LED ~ ${watt}W (Quang thông ~ ${lumens} Lumens)</strong><br><span class="muted">Diện tích ${area} m² — ${sug}</span>`;
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderProducts);
+    document.getElementById('categorySelect').addEventListener('change', renderProducts);
+    document.getElementById('sortSelect').addEventListener('change', renderProducts);
+    document.getElementById('resetFilterBtn').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('categorySelect').value = '';
+      document.getElementById('sortSelect').value = 'newest';
+      renderProducts();
+    });
+
+    renderProducts();
+    renderCart();
+  </script>
+</body>
+</html>

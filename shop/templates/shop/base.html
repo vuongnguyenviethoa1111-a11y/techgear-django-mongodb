@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}TechGear LED & Smart Devices - Phụ kiện công nghệ{% endblock %}</title>
+  <style>
+    :root {
+      --bg-page: #f0f6ff;
+      --surface: #ffffff;
+      --border: #dbeafe;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --cobalt: #2563eb;
+      --cobalt-hover: #1d4ed8;
+      --coral: #ff5a36;
+      --coral-hover: #ea431f;
+      --teal: #0d9488;
+      --teal-soft: #ccfbf1;
+      --amber-soft: #fef3c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 50%, #fff7ed 100%);
+      color: var(--text-main);
+      line-height: 1.55;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      width: min(1140px, 92%);
+      margin: 0 auto;
+    }
+    .top-promo-bar {
+      background: linear-gradient(90deg, var(--cobalt) 0%, var(--teal) 50%, var(--coral) 100%);
+      color: #ffffff;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 12px;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 2px solid var(--border);
+      padding: 13px 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.06);
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.32rem;
+      font-weight: 800;
+      color: var(--cobalt);
+      text-decoration: none;
+    }
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--coral);
+      display: inline-block;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      border-color: var(--cobalt);
+      color: var(--cobalt);
+      background: #eff6ff;
+    }
+    .btn-dark,
+    .btn-cobalt {
+      background: var(--cobalt);
+      color: #ffffff;
+      border-color: var(--cobalt);
+    }
+    .btn-dark:hover,
+    .btn-cobalt:hover {
+      background: var(--cobalt-hover);
+      border-color: var(--cobalt-hover);
+      color: #ffffff;
+    }
+    .btn-coral {
+      background: var(--coral);
+      color: #ffffff;
+      border-color: var(--coral);
+    }
+    .btn-coral:hover {
+      background: var(--coral-hover);
+      border-color: var(--coral-hover);
+      color: #ffffff;
+    }
+    .btn-teal {
+      background: var(--teal);
+      color: #ffffff;
+      border-color: var(--teal);
+    }
+    .btn-teal:hover {
+      background: #0f766e;
+      border-color: #0f766e;
+      color: #ffffff;
+    }
+    main {
+      flex: 1;
+      padding: 26px 0 48px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    }
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .alert {
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      border-left: 5px solid var(--teal);
+      color: #065f46;
+      padding: 11px 15px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+    footer {
+      background: #ffffff;
+      border-top: 2px solid var(--border);
+      padding: 20px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.86rem;
+    }
+
+    /* Tăng độ lộng lẫy kiểu đèn LED RGB cho trang TechGear */
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(59, 130, 246, 0.22), transparent 38%),
+        radial-gradient(circle at 88% 15%, rgba(236, 72, 153, 0.20), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.16), transparent 45%),
+        #090d16 !important;
+      color: #f8fafc !important;
+    }
+
+    header, footer {
+      background: rgba(15, 23, 42, 0.88) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      backdrop-filter: blur(12px);
+    }
+
+    .card,
+    .box,
+    .p-card {
+      background: rgba(17, 24, 39, 0.82) !important;
+      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+      color: #f1f5f9 !important;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+    }
+
+    .card:hover,
+    .p-card:hover {
+      transform: translateY(-4px) !important;
+      border-color: rgba(56, 189, 248, 0.65) !important;
+      box-shadow: 0 16px 38px rgba(37, 99, 235, 0.22), 0 0 24px rgba(236, 72, 153, 0.14) !important;
+    }
+
+    .btn-primary,
+    .btn-dark,
+    .btn-cobalt,
+    .btn-coral {
+      background: linear-gradient(90deg, #2563eb, #06b6d4, #ec4899) !important;
+      background-size: 200% 200% !important;
+      color: #ffffff !important;
+      border: none !important;
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3) !important;
+      transition: background-position 0.4s ease, transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    .btn-primary:hover,
+    .btn-dark:hover,
+    .btn-cobalt:hover,
+    .btn-coral:hover {
+      background-position: 100% 50% !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 10px 28px rgba(236, 72, 153, 0.38) !important;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="top-promo-bar">
+    💡 Chuyên Đèn LED RGB, Thiết bị Smart Home &amp; Phụ kiện IT — Mã <strong>TECH20</strong> (-20%) • <strong>SMART10</strong> (-10%) • Bảo hành chính hãng 12–24 tháng!
+  </div>
+  <header>
+    <div class="container nav">
+      <a href="{% url 'home' %}" class="brand">
+        <span class="brand-dot"></span>
+        <span>TechGear LED &amp; Smart</span>
+      </a>
+      <div class="nav-links">
+        <a href="{% url 'home' %}#products" class="btn">Thiết bị &amp; LED</a>
+        <a href="{% url 'home' %}#power-tool" class="btn">Tính công suất LED</a>
+        <a href="{% url 'warranty_check' %}" class="btn">Tra cứu Bảo hành</a>
+        <a href="{% url 'dashboard_report' %}" class="btn">Thống kê &amp; MongoDB</a>
+        <a href="{% url 'view_cart' %}" class="btn btn-coral">
+          Giỏ hàng ({% block cart_count %}{{ cart_summary.count|default:0 }}{% endblock %})
+        </a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'my_orders' %}" class="btn">Đơn hàng</a>
+          {% if user.is_staff %}
+            <a href="/admin/" class="btn btn-teal">Admin</a>
+          {% endif %}
+          <a href="{% url 'logout' %}" class="btn">Đăng xuất ({{ user.username }})</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn">Đăng nhập</a>
+          <a href="{% url 'register' %}" class="btn btn-cobalt">Đăng ký</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      {% if messages %}
+      <div class="alert-list">
+        {% for m in messages %}
+          <div class="alert">{{ m }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <strong>TechGear LED &amp; Smart Devices</strong> — Đồ án môn học Lập trình Web với <strong>Django (MVT) + MongoDB (PyMongo)</strong><br>
+      <span>Collections: <code>categories</code>, <code>products</code>, <code>orders</code>, <code>order_items</code>, <code>reviews</code>, <code>users</code></span>
+    </div>
+  </footer>
+</body>
+</html>

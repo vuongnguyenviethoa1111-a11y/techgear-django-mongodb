@@ -1,0 +1,54 @@
+{% extends 'shop/base.html' %}
+{% block title %}Giỏ hàng Thiết bị - TechGear{% endblock %}
+{% block content %}
+<div class="card" style="border-top: 4px solid #ff5a36;">
+  <h2 style="margin-bottom:14px; color:#0f172a;">🛒 Giỏ hàng Thiết bị &amp; Đèn LED</h2>
+  {% if cart.items %}
+    {% for item in cart.items %}
+    <div style="border:1px solid #dbeafe; background:#f8fafc; border-radius:10px; padding:14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div>
+        <strong style="font-size:1rem; color:#0f172a;">[{{ item.product.sku }}] {{ item.product.name }}</strong>
+        <span style="display:inline-block; background:#e0f2fe; color:#1d4ed8; font-weight:700; font-size:0.76rem; padding:2px 8px; border-radius:999px; margin-left:6px;">{{ item.variant }}</span>
+        <span style="display:inline-block; background:#ccfbf1; color:#0f766e; font-weight:700; font-size:0.76rem; padding:2px 8px; border-radius:999px; margin-left:4px;">🛡️ BH {{ item.warranty_months }} tháng</span><br>
+        <span style="color:#64748b; font-size:0.86rem;">Đơn giá: {{ item.product.price }} VNĐ | Công suất: {{ item.product.power_watt }}W | Tồn kho: {{ item.product.stock }}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <form method="post" action="{% url 'update_cart' item.key %}" style="display:inline-flex; gap:5px; align-items:center;">
+          {% csrf_token %}
+          <button name="action" value="dec" class="btn">-</button>
+          <span style="padding:0 8px; font-weight:800; color:#2563eb;">{{ item.quantity }}</span>
+          <button name="action" value="inc" class="btn">+</button>
+          <button name="action" value="remove" class="btn" style="color:#e11d48; border-color:#fecdd3;">Xóa</button>
+        </form>
+        <strong style="min-width:115px; text-align:right; color:#ff5a36; font-size:1rem;">{{ item.line_total }} VNĐ</strong>
+      </div>
+    </div>
+    {% endfor %}
+
+    <form method="post" action="{% url 'apply_promo' %}" style="display:flex; gap:8px; margin:18px 0; flex-wrap:wrap; background:#f0fdfa; padding:12px; border-radius:10px; border:1px solid #99f6e4;">
+      {% csrf_token %}
+      <input type="text" name="promo_code" placeholder="Nhập mã ưu đãi (TECH20 giảm 20%, SMART10 giảm 10%)" value="{{ cart.promo_code }}" style="padding:9px 12px; border:1px solid #cbd5e1; border-radius:8px; flex:1; min-width:220px;">
+      <button type="submit" class="btn btn-teal">Áp dụng mã</button>
+    </form>
+
+    <div style="border-top:2px dashed #dbeafe; padding-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="line-height:1.7;">
+        <div>Tạm tính: <strong>{{ cart.subtotal }} VNĐ</strong></div>
+        <div style="color:#0d9488;">Giảm giá: <strong>-{{ cart.discount_amount }} VNĐ</strong></div>
+        <div style="font-size:1.2rem; font-weight:800; color:#ff5a36;">Thành tiền: {{ cart.final_total }} VNĐ</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <a href="{% url 'home' %}#products" class="btn">Chọn thêm thiết bị</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'checkout' %}" class="btn btn-coral">Tiến hành đặt hàng &amp; Kích hoạt BH →</a>
+        {% else %}
+          <a href="{% url 'login' %}?next=/checkout/" class="btn btn-cobalt">🔒 Đăng nhập để đặt hàng →</a>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <p style="color:#64748b; margin-bottom:14px;">Giỏ hàng hiện đang trống. Hãy chọn đèn LED hoặc phụ kiện công nghệ phù hợp nhé!</p>
+    <a href="{% url 'home' %}#products" class="btn btn-cobalt">Xem danh mục thiết bị</a>
+  {% endif %}
+</div>
+{% endblock %}
