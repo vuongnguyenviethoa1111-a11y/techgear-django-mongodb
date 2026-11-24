@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Sum
 from .models import Category, Product, Order, OrderItem, Review
 from mongo_db import (
@@ -178,6 +179,7 @@ def home(request):
     return render(request, 'shop/home.html', context)
 
 
+@csrf_exempt
 def product_detail(request, product_id):
     """
     Trang chi tiết thiết bị & Đánh giá (`reviews`):
@@ -228,6 +230,7 @@ def product_detail(request, product_id):
     })
 
 
+@csrf_exempt
 def add_to_cart(request, product_id):
     if not request.user.is_authenticated:
         messages.warning(request, "Vui lòng đăng nhập tài khoản trước khi mua hàng và thêm thiết bị vào giỏ.")
@@ -269,6 +272,7 @@ def view_cart(request):
     return render(request, 'shop/cart.html', {'cart': cart_data})
 
 
+@csrf_exempt
 def update_cart(request, item_key):
     if not request.user.is_authenticated:
         messages.warning(request, "Vui lòng đăng nhập để thao tác với giỏ hàng.")
@@ -294,6 +298,7 @@ def update_cart(request, item_key):
     return redirect('view_cart')
 
 
+@csrf_exempt
 def apply_promo(request):
     if not request.user.is_authenticated:
         messages.warning(request, "Vui lòng đăng nhập để áp dụng mã giảm giá.")
@@ -311,6 +316,7 @@ def apply_promo(request):
     return redirect('view_cart')
 
 
+@csrf_exempt
 def checkout(request):
     """
     Đặt hàng (`orders`, `order_items`, `products`):
@@ -384,6 +390,7 @@ def my_orders(request):
     return render(request, 'shop/my_orders.html', {'orders': orders})
 
 
+@csrf_exempt
 @login_required(login_url='login')
 def cancel_order(request, order_id):
     """
@@ -450,6 +457,7 @@ def dashboard_report(request):
     })
 
 
+@csrf_exempt
 def login_view(request):
     """Đăng nhập và đồng bộ thông tin tài khoản vào collection `users` của `techgear_db`."""
     next_url = request.GET.get('next') or request.POST.get('next') or 'home'
@@ -473,6 +481,7 @@ def login_view(request):
     return render(request, 'shop/login.html', {'next': next_url})
 
 
+@csrf_exempt
 def register_view(request):
     """Đăng ký tài khoản bằng Gmail + 2 lần mật khẩu và lưu bản ghi vào collection `users` của `techgear_db`."""
     next_url = request.GET.get('next') or request.POST.get('next') or 'home'
