@@ -196,7 +196,7 @@ INITIAL_PRODUCTS = [
         "variants": "Bản 6-in-1,Bản 8-in-1 Có Cổng LAN Gigabit",
         "specs_summary": "Mở rộng kết nối cho Laptop/MacBook, truyền dữ liệu 5Gbps ổn định.",
         "description": "Bộ chia cổng USB Type-C 8 trong 1 vỏ hợp kim nhôm nguyên khối, hỗ trợ xuất hình ảnh HDMI 4K@60Hz sắc nét và cổng mạng dây RJ45 Gigabit.",
-        "image_url": "https://images.unsplash.com/photo-1761043248662-42f371ad31b4?w=800&auto=format&fit=crop&q=80",
+        "image_url": "https://images.unsplash.com/photo-1688703696041-0e6c14fa9174?w=800&auto=format&fit=crop&q=80",
     },
 ]
 
@@ -401,11 +401,15 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
     all_products = list(ProductModel.objects.select_related("category").all())
     prod_by_sku = {p.sku: p for p in all_products}
 
-    # Tự động thay thế các ảnh chữ placehold.co cũ bằng ảnh chụp sản phẩm thật
+    # Tự động thay thế các ảnh chữ placehold.co cũ hoặc ảnh lỗi bằng ảnh chụp sản phẩm thật
     real_img_map = {item["sku"]: item["image_url"] for item in INITIAL_PRODUCTS}
     for prod in all_products:
         new_img = real_img_map.get(prod.sku)
-        if new_img and (not prod.image_url or "placehold.co" in prod.image_url):
+        if new_img and (
+            not prod.image_url
+            or "placehold.co" in prod.image_url
+            or "1761043248662" in prod.image_url
+        ):
             ProductModel.objects.filter(id=prod.id).update(image_url=new_img)
             prod.image_url = new_img
 

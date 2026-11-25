@@ -41,9 +41,15 @@ _CATALOG_SYNCED_ONCE = False
 
 
 def _ensure_catalog_synced():
-    """Tự động đẩy dữ liệu hàng hóa & 2 đơn hàng mẫu lên `techgear_db` ngay khi mở trang."""
+    """Tự động đẩy dữ liệu hàng hóa, ảnh sản phẩm thật & 2 đơn hàng mẫu lên `techgear_db` ngay khi mở trang."""
     global _CATALOG_SYNCED_ONCE
-    if not _CATALOG_SYNCED_ONCE or not Category.objects.exists() or Order.objects.count() < 2:
+    has_old_placeholder = Product.objects.filter(image_url__icontains='placehold.co').exists()
+    if (
+        not _CATALOG_SYNCED_ONCE
+        or not Category.objects.exists()
+        or Order.objects.count() < 2
+        or has_old_placeholder
+    ):
         sync_all_catalog_between_django_and_mongo(Category, Product)
         _CATALOG_SYNCED_ONCE = True
 
