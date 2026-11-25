@@ -401,14 +401,36 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
     all_products = list(ProductModel.objects.select_related("category").all())
     prod_by_sku = {p.sku: p for p in all_products}
 
-    # Tự động cập nhật 6 ảnh sản phẩm do người dùng cung cấp và ảnh mặc định cho các sản phẩm còn lại
+    # Tự động cập nhật 6 ảnh sản phẩm do người dùng cung cấp (nhúng trực tiếp Base64 hoặc static)
+    import os
+    import base64
+    from django.conf import settings
+
+    static_file_map = {
+        "TG-HUB-8IN1": "tg_hub_8in1.jpg",
+        "TG-SENS-PIR1": "tg_sens_pir1.jpg",
+        "TG-PLUG-W20": "tg_plug_w20.jpg",
+        "TG-AMB-BAR2": "tg_amb_bar2.jpg",
+        "TG-BULB-W12": "tg_bulb_w12.jpg",
+        "TG-LED-RGB05": "tg_led_rgb05.jpg",
+    }
     real_img_map = {item["sku"]: item["image_url"] for item in INITIAL_PRODUCTS}
     for prod in all_products:
+        fname = static_file_map.get(prod.sku)
+        if fname and not (prod.image_url or "").startswith("data:image/"):
+            fpath = os.path.join(settings.BASE_DIR, "shop", "static", "shop", "products", fname)
+            if os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    b64_img = "data:image/jpeg;base64," + base64.b64encode(f.read()).decode("ascii")
+                ProductModel.objects.filter(id=prod.id).update(image_url=b64_img)
+                prod.image_url = b64_img
+                continue
+
         new_img = real_img_map.get(prod.sku)
         if new_img and (
             not prod.image_url
             or "placehold.co" in prod.image_url
-            or "images.unsplash.com" in prod.image_url
+            or "1761043248662" in prod.image_url
         ):
             if prod.image_url != new_img:
                 ProductModel.objects.filter(id=prod.id).update(image_url=new_img)

@@ -44,7 +44,9 @@ def _ensure_catalog_synced():
     """Tự động đẩy dữ liệu hàng hóa, ảnh sản phẩm thật & 2 đơn hàng mẫu lên `techgear_db` ngay khi mở trang."""
     global _CATALOG_SYNCED_ONCE
     needs_img_sync = Product.objects.filter(
-        Q(image_url__icontains='placehold.co') | Q(sku='TG-HUB-8IN1', image_url__icontains='unsplash.com')
+        Q(image_url__icontains='placehold.co') |
+        Q(sku='TG-HUB-8IN1', image_url__startswith='/static/') |
+        Q(sku='TG-HUB-8IN1', image_url__icontains='unsplash.com')
     ).exists()
     if (
         not _CATALOG_SYNCED_ONCE
