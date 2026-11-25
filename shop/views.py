@@ -41,38 +41,28 @@ _CATALOG_SYNCED_ONCE = False
 
 
 def _ensure_catalog_synced():
-    """Tự động đẩy dữ liệu hàng hóa, ảnh sản phẩm thật & 2 đơn hàng mẫu lên `techgear_db` ngay khi mở trang."""
+    """
+    Chỉ kiểm tra trên SQLite nội bộ (< 2ms). Nếu thiếu dữ liệu mới nạp,
+    còn việc đẩy đồng bộ lên MongoDB Atlas sẽ chạy ngầm trong background thread.
+    """
     global _CATALOG_SYNCED_ONCE
+    if _CATALOG_SYNCED_ONCE:
+        return
+    _CATALOG_SYNCED_ONCE = True
     needs_img_sync = Product.objects.filter(
         Q(image_url__icontains='placehold.co') |
         Q(sku='TG-HUB-8IN1', image_url__startswith='/static/') |
         Q(sku='TG-HUB-8IN1', image_url__icontains='unsplash.com')
     ).exists()
-    if (
-        not _CATALOG_SYNCED_ONCE
-        or not Category.objects.exists()
-        or Order.objects.count() < 2
-        or needs_img_sync
-    ):
-        sync_all_catalog_between_django_and_mongo(Category, Product)
-        _CATALOG_SYNCED_ONCE = True
+    if not Category.objects.exists() or Order.objects.count() < 2 or needs_img_sync:
+        from .mongo_client import _run_async
+        _run_async(sync_all_catalog_between_django_and_mongo, Category, Product)
 
 
 def _build_cart_data(request):
-    """Đọc dữ liệu giỏ hàng từ request.session['cart'] (tự khôi phục từ MongoDB nếu session trống) và tính tổng tiền."""
+    """Đọc dữ liệu giỏ hàng từ request.session['cart'] (< 1ms) và tính tổng tiền."""
     raw_cart = request.session.get('cart', {})
     promo_code = request.session.get('promo_code', '')
-
-    # Nếu user đã đăng nhập mà session giỏ hàng đang trống, tự động khôi phục từ MongoDB `users`
-    if request.user.is_authenticated and not raw_cart:
-        saved_cart, saved_promo = load_user_cart_from_mongo(request.user)
-        if saved_cart:
-            raw_cart = saved_cart
-            request.session['cart'] = raw_cart
-            if saved_promo and not promo_code:
-                promo_code = saved_promo
-                request.session['promo_code'] = promo_code
-            request.session.modified = True
     items = []
     subtotal = 0
 
@@ -197,7 +187,6 @@ def home(request):
         'selected_cat': selected_cat,
         'sort': sort,
         'power_result': power_result,
-        'mongo_info': MongoManager.status_info(),
     }
     return render(request, 'shop/home.html', context)
 
@@ -206,8 +195,7 @@ def home(request):
 def product_detail(request, product_id):
     """
     Trang chi tiết thiết bị & Đánh giá (`reviews`):
-    - Khi gửi form đánh giá: lưu/cập nhật (upsert) trực tiếp vào collection `reviews` trong `techgear_db`.
-    - Đọc danh sách đánh giá từ `reviews` trên MongoDB Atlas để hiển thị trên trang sản phẩm.
+    - Đọc cực nhanh từ SQLite (< 5ms) và đồng bộ đánh giá mới lên `reviews` của `techgear_db` trong luồng nền.
     """
     _ensure_catalog_synced()
     product = get_object_or_404(Product.objects.select_related('category'), id=product_id)
@@ -223,7 +211,6 @@ def product_detail(request, product_id):
         ) or 'Khách mua hàng'
 
         if comment:
-            # Nếu người dùng này đã đánh giá sản phẩm này trước đó thì cập nhật lại, ngược lại tạo mới
             rev, created = Review.objects.update_or_create(
                 product=product,
                 reviewer_name=reviewer_name,
@@ -233,17 +220,16 @@ def product_detail(request, product_id):
                     'comment': comment,
                 },
             )
-            # Lưu / cập nhật trực tiếp lên collection `reviews` trên MongoDB Atlas (`techgear_db`)
-            sync_review_to_mongo(rev)
+            # Đồng bộ ngầm lên collection `reviews` trên MongoDB Atlas (`techgear_db`) không gây chờ trang
+            from .mongo_client import _run_async
+            _run_async(sync_review_to_mongo, rev)
             if created:
                 messages.success(request, "Đã lưu đánh giá kỹ thuật vào collection 'reviews' (techgear_db)!")
             else:
                 messages.success(request, "Đã cập nhật đánh giá kỹ thuật của bạn trên collection 'reviews' (techgear_db)!")
             return redirect('product_detail', product_id=product.id)
 
-    # Ưu tiên lấy danh sách đánh giá trực tiếp từ collection `reviews` của MongoDB Atlas
-    mongo_reviews = get_product_reviews_from_mongo(product)
-    reviews = mongo_reviews if mongo_reviews else list(product.reviews.all())
+    reviews = list(product.reviews.all())
 
     return render(request, 'shop/product_detail.html', {
         'product': product,
@@ -286,8 +272,9 @@ def add_to_cart(request, product_id):
 
         request.session['cart'] = cart
         request.session.modified = True
-        # Lưu giỏ hàng vĩnh viễn theo tài khoản lên collection `users` (techgear_db)
-        save_user_cart_to_mongo(request.user, cart, request.session.get('promo_code', ''))
+        # Lưu giỏ hàng vĩnh viễn theo tài khoản lên collection `users` (techgear_db) trong luồng nền
+        from .mongo_client import _run_async
+        _run_async(save_user_cart_to_mongo, request.user, dict(cart), request.session.get('promo_code', ''))
         messages.success(request, f"Đã thêm {product.name} ({variant} • BH {product.warranty_months} tháng) vào giỏ hàng.")
     return redirect('view_cart')
 
@@ -320,7 +307,8 @@ def update_cart(request, item_key):
                 cart.pop(item_key, None)
             request.session['cart'] = cart
             request.session.modified = True
-            save_user_cart_to_mongo(request.user, cart, request.session.get('promo_code', ''))
+            from .mongo_client import _run_async
+            _run_async(save_user_cart_to_mongo, request.user, dict(cart), request.session.get('promo_code', ''))
     return redirect('view_cart')
 
 
@@ -339,7 +327,8 @@ def apply_promo(request):
             request.session['promo_code'] = ''
             messages.warning(request, "Mã giảm giá không hợp lệ. Thử mã TECH20 hoặc SMART10.")
         request.session.modified = True
-        save_user_cart_to_mongo(request.user, request.session.get('cart', {}), request.session.get('promo_code', ''))
+        from .mongo_client import _run_async
+        _run_async(save_user_cart_to_mongo, request.user, dict(request.session.get('cart', {})), request.session.get('promo_code', ''))
     return redirect('view_cart')
 
 
@@ -398,14 +387,15 @@ def checkout(request):
             )
             created_items.append(oi)
 
-        # Lưu đơn vào `orders`, từng món vào `order_items` và cập nhật `stock` đã trừ trên `products`
-        sync_order_to_mongo(order, created_items, decrement_mongo_stock=True)
+        # Lưu đơn vào `orders`, từng món vào `order_items` và cập nhật `stock` đã trừ trên `products` trong luồng nền
+        from .mongo_client import _run_async
+        _run_async(sync_order_to_mongo, order, created_items, True)
 
         request.session['cart'] = {}
         request.session['promo_code'] = ''
         request.session.modified = True
         # Xóa giỏ hàng đã đặt xong trên MongoDB `users`
-        save_user_cart_to_mongo(request.user, {}, '')
+        _run_async(save_user_cart_to_mongo, request.user, {}, '')
 
         messages.success(request, f"Đặt hàng thành công! Mã đơn #{order.id} đã lưu vào techgear_db (orders, order_items & trừ kho products).")
         return redirect('my_orders')
@@ -479,8 +469,9 @@ def cancel_order(request, order_id):
                 item.product.stock += item.quantity
                 item.product.save()
 
-            # Cập nhật trạng thái `cancelled` trong `orders` và hoàn kho trong `products` trên MongoDB Atlas
-            cancel_order_in_mongo(order, order_items)
+            # Cập nhật trạng thái `cancelled` trong `orders` và hoàn kho trong `products` trên MongoDB Atlas trong luồng nền
+            from .mongo_client import _run_async
+            _run_async(cancel_order_in_mongo, order, order_items)
 
             messages.info(request, f"Đã hủy đơn hàng #{order.id}, cập nhật trạng thái 'Đã hủy' và hoàn lại tồn kho trên techgear_db.")
         else:
@@ -562,8 +553,9 @@ def login_view(request):
             request.session['promo_code'] = final_promo
             request.session.modified = True
 
-            # Đồng bộ thông tin đăng nhập + giỏ hàng lên collection `users`
-            sync_user_to_mongo(user, cart_dict=merged_cart, promo_code=final_promo)
+            # Đồng bộ thông tin đăng nhập + giỏ hàng lên collection `users` trong luồng nền
+            from .mongo_client import _run_async
+            _run_async(sync_user_to_mongo, user, merged_cart, final_promo)
             messages.success(request, f"Chào mừng {user.email or user.username} quay trở lại! Đã đồng bộ giỏ hàng của bạn.")
             return redirect(next_url)
         messages.warning(request, "Email hoặc mật khẩu không đúng.")
@@ -593,8 +585,8 @@ def register_view(request):
             request.session['cart'] = pre_cart
             request.session['promo_code'] = pre_promo
             request.session.modified = True
-            # Lưu tài khoản mới + giỏ hàng trực tiếp vào collection `users`
-            sync_user_to_mongo(user, cart_dict=pre_cart, promo_code=pre_promo)
+            from .mongo_client import _run_async
+            _run_async(sync_user_to_mongo, user, pre_cart, pre_promo)
             messages.success(request, f"Đăng ký thành công! Đã lưu tài khoản {user.email} vào collection 'users' (techgear_db).")
             return redirect(next_url)
     return render(request, 'shop/register.html', {'next': next_url})
@@ -603,9 +595,10 @@ def register_view(request):
 def logout_view(request):
     """Trước khi đăng xuất, lưu toàn bộ giỏ hàng hiện tại của user vào collection `users` trên MongoDB Atlas."""
     if request.user.is_authenticated:
-        current_cart = request.session.get('cart', {})
+        current_cart = dict(request.session.get('cart', {}))
         current_promo = request.session.get('promo_code', '')
-        save_user_cart_to_mongo(request.user, current_cart, current_promo)
+        from .mongo_client import _run_async
+        _run_async(save_user_cart_to_mongo, request.user, current_cart, current_promo)
     logout(request)
     messages.info(request, "Bạn đã đăng xuất. Giỏ hàng của bạn đã được lưu an toàn và sẽ tự khôi phục khi đăng nhập lại.")
     return redirect('home')

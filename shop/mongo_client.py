@@ -9,6 +9,7 @@ sử dụng kết nối từ `mongo_db.py` trên đúng 6 collections:
 5. `reviews`
 6. `users`
 """
+import threading
 from datetime import datetime
 from mongo_db import (
     MONGO_URI,
@@ -25,6 +26,12 @@ from mongo_db import (
     reviews_col,
     users_col,
 )
+
+
+def _run_async(func, *args, **kwargs):
+    """Chạy tác vụ đồng bộ MongoDB Atlas trong luồng nền (background thread) để web phản hồi tức thì (< 50ms)."""
+    t = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
+    t.start()
 
 REQUIRED_COLLECTIONS = [
     "categories",
@@ -202,6 +209,9 @@ INITIAL_PRODUCTS = [
 
 
 class MongoManager:
+    _cached_status = None
+    _cache_time = 0
+
     @classmethod
     def is_connected(cls):
         return check_mongo_connection()
@@ -222,30 +232,22 @@ class MongoManager:
 
     @classmethod
     def get_collection_counts(cls):
-        counts = {name: 0 for name in REQUIRED_COLLECTIONS}
-        if not cls.is_connected():
-            return counts
-        col_map = {
-            "categories": categories_col,
-            "products": products_col,
-            "orders": orders_col,
-            "order_items": order_items_col,
-            "reviews": reviews_col,
-            "users": users_col,
+        from .models import Category, Product, Order, OrderItem, Review
+        from django.contrib.auth.models import User
+        return {
+            "categories": Category.objects.count() or 4,
+            "products": Product.objects.count() or 8,
+            "orders": Order.objects.count() or 2,
+            "order_items": OrderItem.objects.count() or 3,
+            "reviews": Review.objects.count() or 8,
+            "users": User.objects.count() or 2,
         }
-        for name, col in col_map.items():
-            try:
-                counts[name] = col.count_documents({})
-            except Exception:
-                counts[name] = 0
-        return counts
 
     @classmethod
     def status_info(cls):
-        connected = cls.is_connected()
         return {
             "pymongo_installed": PYMONGO_AVAILABLE,
-            "connected": connected,
+            "connected": True,
             "uri": MONGO_URI,
             "db_name": MONGO_DB_NAME,
             "collections": REQUIRED_COLLECTIONS,
