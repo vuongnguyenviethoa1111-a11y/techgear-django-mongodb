@@ -294,8 +294,7 @@
         {% if user.is_authenticated %}
           <a href="{% url 'my_orders' %}" class="btn">Đơn hàng</a>
           {% if user.is_staff %}
-            <a href="{% url 'admin_panel' %}" class="btn btn-teal">Quản lý Hệ thống</a>
-            <a href="/admin/" class="btn">Django Admin</a>
+            <a href="{% url 'admin_panel' %}" class="btn btn-teal">Admin</a>
           {% endif %}
           <a href="{% url 'logout' %}" class="btn">Đăng xuất ({{ user.username }})</a>
         {% else %}

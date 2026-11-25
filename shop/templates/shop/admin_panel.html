@@ -265,7 +265,7 @@
       <div class="admin-module-row {% if active_tab == 'orders' %}active-row{% endif %}">
         <a href="?tab=orders#work-area" class="admin-module-name">Đơn hàng ({{ orders_list.count }})</a>
         <div class="admin-row-actions">
-          <a href="/admin/shop/order/add/" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=orders#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
           <a href="?tab=orders#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
         </div>
       </div>
@@ -276,10 +276,10 @@
       <div class="admin-module-header">XÁC THỰC VÀ ỦY QUYỀN</div>
 
       <div class="admin-module-row">
-        <a href="/admin/auth/group/" class="admin-module-name">Các nhóm ({{ groups_list.count }})</a>
+        <a href="?tab=users#work-area" class="admin-module-name">Các nhóm ({{ groups_list.count }})</a>
         <div class="admin-row-actions">
-          <a href="/admin/auth/group/add/" class="act-add"><span class="plus">+</span> Thêm vào</a>
-          <a href="/admin/auth/group/" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+          <a href="?tab=users#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=users#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
         </div>
       </div>
 
@@ -491,15 +491,33 @@
           <td>{{ p.warranty_months }} th</td>
           <td style="color:#f472b6; font-weight:700;">{{ p.price|vnd }} ₫</td>
           <td><strong style="color:{% if p.stock > 10 %}#2dd4bf{% else %}#fb7185{% endif %};">{{ p.stock }}</strong></td>
-          <td style="display:flex; gap:6px;">
-            <a href="/admin/shop/product/{{ p.id }}/change/" class="btn" style="padding:5px 9px; font-size:0.76rem;">✏️ Sửa chi tiết</a>
-            <form method="post" onsubmit="return confirm('Xóa thiết bị {{ p.name }}?');">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="delete_product">
-              <input type="hidden" name="tab" value="products">
-              <input type="hidden" name="prod_id" value="{{ p.id }}">
-              <button type="submit" class="btn" style="padding:5px 9px; font-size:0.76rem; color:#fb7185; border-color:#fb7185;">🗑️</button>
-            </form>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn" style="padding:5px 9px; font-size:0.76rem;"
+                data-id="{{ p.id }}"
+                data-cat="{{ p.category.id }}"
+                data-sku="{{ p.sku }}"
+                data-name="{{ p.name }}"
+                data-brand="{{ p.brand }}"
+                data-price="{{ p.price }}"
+                data-warranty="{{ p.warranty_months }}"
+                data-stock="{{ p.stock }}"
+                data-watt="{{ p.power_watt }}"
+                data-life="{{ p.lifespan_hours }}"
+                data-volt="{{ p.voltage }}"
+                data-conn="{{ p.connectivity }}"
+                data-color="{{ p.color_temp }}"
+                data-vars="{{ p.variants }}"
+                data-specs="{{ p.specs_summary }}"
+                onclick="editProductInPlace(this)">✏️ Sửa</button>
+              <form method="post" onsubmit="return confirm('Xóa thiết bị {{ p.name }}?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_product">
+                <input type="hidden" name="tab" value="products">
+                <input type="hidden" name="prod_id" value="{{ p.id }}">
+                <button type="submit" class="btn" style="padding:5px 9px; font-size:0.76rem; color:#fb7185; border-color:#fb7185;">🗑️</button>
+              </form>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -718,6 +736,28 @@
 {% endif %}
 
 <script>
+  window.editProductInPlace = function(btn) {
+    var box = document.getElementById('productFormBox');
+    box.style.display = 'block';
+    document.getElementById('p_id').value = btn.getAttribute('data-id') || '';
+    document.getElementById('p_cat').value = btn.getAttribute('data-cat') || '';
+    document.getElementById('p_sku').value = btn.getAttribute('data-sku') || '';
+    document.getElementById('p_name').value = btn.getAttribute('data-name') || '';
+    document.getElementById('p_brand').value = btn.getAttribute('data-brand') || '';
+    document.getElementById('p_price').value = btn.getAttribute('data-price') || '';
+    document.getElementById('p_warranty').value = btn.getAttribute('data-warranty') || '';
+    document.getElementById('p_stock').value = btn.getAttribute('data-stock') || '';
+    document.getElementById('p_watt').value = btn.getAttribute('data-watt') || '';
+    document.getElementById('p_life').value = btn.getAttribute('data-life') || '';
+    document.getElementById('p_volt').value = btn.getAttribute('data-volt') || '';
+    document.getElementById('p_conn').value = btn.getAttribute('data-conn') || '';
+    document.getElementById('p_color').value = btn.getAttribute('data-color') || '';
+    document.getElementById('p_vars').value = btn.getAttribute('data-vars') || '';
+    document.getElementById('p_specs').value = btn.getAttribute('data-specs') || '';
+    document.getElementById('p_img').value = '';
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   (function() {
     var picker = document.getElementById('localImgPicker');
     var imgInput = document.getElementById('p_img');
