@@ -287,7 +287,9 @@
         <a href="{% url 'home' %}#products" class="btn">Thiết bị &amp; LED</a>
         <a href="{% url 'home' %}#power-tool" class="btn">Tính công suất LED</a>
         <a href="{% url 'warranty_check' %}" class="btn">Tra cứu Bảo hành</a>
-        <a href="{% url 'dashboard_report' %}" class="btn">Thống kê &amp; MongoDB</a>
+        {% if user.is_authenticated and user.is_staff %}
+          <a href="{% url 'dashboard_report' %}" class="btn">Thống kê &amp; MongoDB</a>
+        {% endif %}
         <a href="{% url 'view_cart' %}" class="btn btn-coral">
           Giỏ hàng ({% block cart_count %}{{ cart_summary.count|default:0 }}{% endblock %})
         </a>

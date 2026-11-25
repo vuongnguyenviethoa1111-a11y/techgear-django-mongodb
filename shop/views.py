@@ -497,8 +497,12 @@ def warranty_check(request):
     })
 
 
+@login_required(login_url='login')
 def dashboard_report(request):
-    """Trang thống kê tồn kho, doanh thu và số lượng document trong 6 collections của `techgear_db`."""
+    """Trang thống kê tồn kho, doanh thu và số lượng document trong 6 collections của `techgear_db` (Chỉ dành cho Admin)."""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.warning(request, "Chỉ tài khoản Quản trị viên (Admin) mới có quyền xem Bảng Thống kê Hệ thống & MongoDB.")
+        return redirect('home')
     _ensure_catalog_synced()
     total_products = Product.objects.count()
     total_stock = Product.objects.aggregate(s=Sum('stock'))['s'] or 0
