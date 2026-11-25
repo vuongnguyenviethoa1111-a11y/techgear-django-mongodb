@@ -6,6 +6,7 @@ urlpatterns = [
     path('product/<int:product_id>/', views.product_detail, name='product_detail'),
     path('warranty/', views.warranty_check, name='warranty_check'),
     path('dashboard/', views.dashboard_report, name='dashboard_report'),
+    path('quan-ly/', views.admin_panel, name='admin_panel'),
     path('cart/', views.view_cart, name='view_cart'),
     path('cart/add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
     path('cart/update/<str:item_key>/', views.update_cart, name='update_cart'),

@@ -1,0 +1,737 @@
+{% extends 'shop/base.html' %}
+{% load shop_filters %}
+{% block title %}TECHGEAR LED & SMART DEVICES - QUẢN TRỊ HỆ THỐNG{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-banner {
+    background: #336b87;
+    color: #f4d03f;
+    padding: 14px 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .admin-banner h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f4d03f;
+    letter-spacing: 0.02em;
+  }
+  .admin-banner-right {
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .admin-banner-right a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .admin-banner-right a:hover {
+    text-decoration: underline;
+  }
+  .admin-subtitle {
+    font-size: 1.2rem;
+    color: #cbd5e1;
+    margin-bottom: 18px;
+    font-weight: 400;
+  }
+  .admin-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 0.85fr;
+    gap: 28px;
+    align-items: start;
+    margin-bottom: 28px;
+  }
+  .admin-module-box {
+    background: rgba(17, 24, 39, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .admin-module-header {
+    background: #336b87;
+    color: #ffffff;
+    padding: 9px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .admin-module-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.88rem;
+  }
+  .admin-module-row:nth-child(even) {
+    background: rgba(30, 41, 59, 0.45);
+  }
+  .admin-module-row.active-row {
+    background: rgba(56, 189, 248, 0.16);
+    border-left: 4px solid #38bdf8;
+  }
+  .admin-module-name {
+    color: #60a5fa;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .admin-module-name:hover {
+    color: #93c5fd;
+    text-decoration: underline;
+  }
+  .admin-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.82rem;
+  }
+  .act-add {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .act-add span.plus {
+    color: #4ade80;
+    font-weight: 900;
+    font-size: 1rem;
+  }
+  .act-change {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .act-change span.pen {
+    color: #facc15;
+  }
+  .recent-box {
+    background: rgba(30, 34, 42, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 18px;
+  }
+  .recent-box h3 {
+    font-size: 1.08rem;
+    color: #e2e8f0;
+    font-weight: 400;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 12px;
+  }
+  .recent-box h4 {
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+  }
+  .recent-item {
+    font-size: 0.84rem;
+    padding: 7px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    line-height: 1.45;
+  }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    margin-top: 12px;
+  }
+  .admin-table th, .admin-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+  }
+  .admin-table th {
+    background: #1e3a8a;
+    color: #f8fafc;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+  .admin-form-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .admin-form-grid label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 4px;
+  }
+  .admin-form-grid input,
+  .admin-form-grid select,
+  .admin-form-grid textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 6px;
+    background: rgba(17, 24, 39, 0.95);
+    color: #f8fafc;
+    font-size: 0.86rem;
+  }
+  @media (max-width: 900px) {
+    .admin-dashboard-grid,
+    .admin-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Thanh Header chuẩn giao diện Quản trị Hệ thống -->
+<div class="admin-banner">
+  <h1>TECHGEAR LED &amp; SMART DEVICES - QUẢN TRỊ HỆ THỐNG</h1>
+  <div class="admin-banner-right">
+    <span>CHÀO MỪNG BẠN, <strong>{{ user.username|upper }}</strong>.</span>
+    <a href="{% url 'home' %}">XEM TRANG WEB</a> /
+    <a href="/admin/password_change/">ĐỔI MẬT KHẨU</a> /
+    <a href="{% url 'logout' %}">THOÁT</a>
+  </div>
+</div>
+
+<div class="admin-subtitle">
+  Bảng điều khiển Quản lý Thiết bị, Đơn hàng, Bảo hành &amp; Tài khoản người dùng
+</div>
+
+<!-- Bố cục 2 cột giống hệt ảnh chụp: Cột trái 2 bảng phân hệ + Cột phải Hoạt động gần đây -->
+<div class="admin-dashboard-grid">
+  <div>
+    <!-- Khối 1: QUẢN LÝ THIẾT BỊ CÔNG NGHỆ & ĐÈN LED (TECHGEAR) -->
+    <div class="admin-module-box">
+      <div class="admin-module-header">QUẢN LÝ THIẾT BỊ CÔNG NGHỆ &amp; ĐÈN LED (TECHGEAR)</div>
+
+      <div class="admin-module-row {% if active_tab == 'categories' %}active-row{% endif %}">
+        <a href="?tab=categories#work-area" class="admin-module-name">Danh mục thiết bị ({{ categories.count }})</a>
+        <div class="admin-row-actions">
+          <a href="?tab=categories&mode=add#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=categories#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+
+      <div class="admin-module-row {% if active_tab == 'products' %}active-row{% endif %}">
+        <a href="?tab=products#work-area" class="admin-module-name">Thiết bị &amp; Đèn LED ({{ products.count }})</a>
+        <div class="admin-row-actions">
+          <a href="?tab=products&mode=add#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=products#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+
+      <div class="admin-module-row {% if active_tab == 'users' %}active-row{% endif %}">
+        <a href="?tab=users#work-area" class="admin-module-name">Tài khoản người dùng ({{ users_list.count }})</a>
+        <div class="admin-row-actions">
+          <a href="?tab=users&mode=add#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=users#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+
+      <div class="admin-module-row {% if active_tab == 'reviews' %}active-row{% endif %}">
+        <a href="?tab=reviews#work-area" class="admin-module-name">Đánh giá thiết bị ({{ reviews_list.count }})</a>
+        <div class="admin-row-actions">
+          <a href="?tab=reviews&mode=add#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=reviews#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+
+      <div class="admin-module-row {% if active_tab == 'orders' %}active-row{% endif %}">
+        <a href="?tab=orders#work-area" class="admin-module-name">Đơn hàng ({{ orders_list.count }})</a>
+        <div class="admin-row-actions">
+          <a href="/admin/shop/order/add/" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=orders#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Khối 2: XÁC THỰC VÀ ỦY QUYỀN -->
+    <div class="admin-module-box">
+      <div class="admin-module-header">XÁC THỰC VÀ ỦY QUYỀN</div>
+
+      <div class="admin-module-row">
+        <a href="/admin/auth/group/" class="admin-module-name">Các nhóm ({{ groups_list.count }})</a>
+        <div class="admin-row-actions">
+          <a href="/admin/auth/group/add/" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="/admin/auth/group/" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+
+      <div class="admin-module-row">
+        <a href="?tab=users#work-area" class="admin-module-name">Người sử dụng ({{ users_list.count }})</a>
+        <div class="admin-row-actions">
+          <a href="?tab=users&mode=add#work-area" class="act-add"><span class="plus">+</span> Thêm vào</a>
+          <a href="?tab=users#work-area" class="act-change"><span class="pen">✏️</span> Thay đổi</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cột phải: Hoạt động gần đây -->
+  <div class="recent-box">
+    <h3>Hoạt động gần đây</h3>
+    <h4>Hoạt động của tôi</h4>
+    {% for o in orders_list|slice:":3" %}
+      <div class="recent-item">
+        <span style="color:#4ade80; font-weight:800;">+</span>
+        <a href="?tab=orders#work-area" style="color:#60a5fa; text-decoration:none; font-weight:600;">
+          Đơn #{{ o.id }} - {{ o.full_name }} ({{ o.total_price|vnd }} VNĐ)
+        </a><br>
+        <span style="color:#94a3b8; font-size:0.78rem;">Đơn hàng • {{ o.get_status_display }}</span>
+      </div>
+    {% endfor %}
+    {% for r in reviews_list|slice:":3" %}
+      <div class="recent-item">
+        <span style="color:#facc15; font-weight:800;">✎</span>
+        <a href="?tab=reviews#work-area" style="color:#60a5fa; text-decoration:none;">
+          {{ r.reviewer_name }} - {{ r.product.name }} ({{ r.rating }} sao)
+        </a><br>
+        <span style="color:#94a3b8; font-size:0.78rem;">Đánh giá thiết bị</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ==========================================================================
+     KHU VỰC THAO TÁC TRỰC TIẾP (THÊM / SỬA / XÓA CHO TỪNG MỤC)
+     ========================================================================== -->
+<div id="work-area"></div>
+
+<!-- 1. TAB DANH MỤC THIẾT BỊ -->
+{% if active_tab == 'categories' %}
+<div class="card" style="margin-bottom:24px;">
+  <h2 style="color:#38bdf8; font-size:1.2rem; margin-bottom:14px;">📁 Quản lý Danh mục thiết bị (Collection: techgear_db.categories)</h2>
+
+  <form method="post" class="admin-form-box">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_category">
+    <input type="hidden" name="tab" value="categories">
+    <input type="hidden" name="cat_id" id="edit_cat_id" value="">
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="flex:1; min-width:200px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">Tên danh mục:</label>
+        <input type="text" name="name" id="edit_cat_name" placeholder="VD: Đèn LED Thông Minh" required style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:#0f172a; color:#fff;">
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">Đường dẫn (Slug):</label>
+        <input type="text" name="slug" id="edit_cat_slug" placeholder="VD: den-led-thong-minh" required style="width:100%; padding:9px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.2); background:#0f172a; color:#fff;">
+      </div>
+      <button type="submit" class="btn btn-teal" style="padding:10px 20px;">💾 Lưu Danh mục</button>
+    </div>
+  </form>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tên danh mục</th>
+        <th>Slug</th>
+        <th>Thao tác</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in categories %}
+      <tr>
+        <td>#{{ c.id }}</td>
+        <td><strong style="color:#38bdf8;">{{ c.name }}</strong></td>
+        <td><code>{{ c.slug }}</code></td>
+        <td style="display:flex; gap:8px;">
+          <button type="button" class="btn" style="padding:5px 10px; font-size:0.78rem;" onclick="document.getElementById('edit_cat_id').value='{{ c.id }}'; document.getElementById('edit_cat_name').value='{{ c.name|escapejs }}'; document.getElementById('edit_cat_slug').value='{{ c.slug|escapejs }}';">✏️ Sửa</button>
+          <form method="post" onsubmit="return confirm('Xóa danh mục {{ c.name }}?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_category">
+            <input type="hidden" name="tab" value="categories">
+            <input type="hidden" name="cat_id" value="{{ c.id }}">
+            <button type="submit" class="btn" style="padding:5px 10px; font-size:0.78rem; color:#fb7185; border-color:#fb7185;">🗑️ Xóa</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- 2. TAB THIẾT BỊ & ĐÈN LED -->
+{% if active_tab == 'products' or active_tab == 'overview' %}
+<div class="card" style="margin-bottom:24px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+    <h2 style="color:#38bdf8; font-size:1.2rem;">💡 Quản lý Thiết bị &amp; Đèn LED (Collection: techgear_db.products)</h2>
+    <button type="button" class="btn btn-teal" onclick="var f=document.getElementById('productFormBox'); f.style.display=f.style.display==='none'?'block':'none';">+ Thêm / Sửa Thiết bị</button>
+  </div>
+
+  <form method="post" id="productFormBox" class="admin-form-box" style="display:{% if request.GET.mode == 'add' %}block{% else %}none{% endif %};">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_product">
+    <input type="hidden" name="tab" value="products">
+    <input type="hidden" name="prod_id" id="p_id" value="">
+
+    <div class="admin-form-grid">
+      <div>
+        <label>Danh mục thiết bị:</label>
+        <select name="category_id" id="p_cat" required>
+          {% for c in categories %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Mã SKU kỹ thuật:</label>
+        <input type="text" name="sku" id="p_sku" value="TG-LED-NEW" required>
+      </div>
+      <div>
+        <label>Tên thiết bị / Đèn LED:</label>
+        <input type="text" name="name" id="p_name" placeholder="Nhập tên thiết bị..." required>
+      </div>
+      <div>
+        <label>Thương hiệu:</label>
+        <input type="text" name="brand" id="p_brand" value="TechGear Light">
+      </div>
+      <div>
+        <label>Giá bán (VNĐ):</label>
+        <input type="number" name="price" id="p_price" value="299000" required>
+      </div>
+      <div>
+        <label>Bảo hành (tháng) &amp; Tồn kho:</label>
+        <div style="display:flex; gap:6px;">
+          <input type="number" name="warranty_months" id="p_warranty" value="18" placeholder="BH tháng" required>
+          <input type="number" name="stock" id="p_stock" value="25" placeholder="Tồn kho" required>
+        </div>
+      </div>
+      <div>
+        <label>Công suất (W) &amp; Tuổi thọ (giờ):</label>
+        <div style="display:flex; gap:6px;">
+          <input type="number" name="power_watt" id="p_watt" value="15" placeholder="Watt">
+          <input type="number" name="lifespan_hours" id="p_life" value="35000" placeholder="Giờ">
+        </div>
+      </div>
+      <div>
+        <label>Điện áp hoạt động:</label>
+        <input type="text" name="voltage" id="p_volt" value="220V / USB-C 5V">
+      </div>
+      <div>
+        <label>Chuẩn kết nối:</label>
+        <input type="text" name="connectivity" id="p_conn" value="Wi-Fi 2.4GHz + Bluetooth 5.2">
+      </div>
+      <div>
+        <label>Nhiệt độ màu / Ánh sáng:</label>
+        <input type="text" name="color_temp" id="p_color" value="RGBIC 16 triệu màu / 3000K-6500K">
+      </div>
+      <div>
+        <label>Các phiên bản (cách nhau dấu phẩy):</label>
+        <input type="text" name="variants" id="p_vars" value="Bản Tiêu Chuẩn,Bản Pro Smart">
+      </div>
+      <div>
+        <label>Ảnh thiết bị (Link URL hoặc Tải từ máy):</label>
+        <input type="text" name="image_url" id="p_img" placeholder="Dán link ảnh hoặc chọn file bên dưới...">
+        <div style="margin-top:6px; display:flex; gap:6px;">
+          <label for="localImgPicker" style="background:#2563eb; color:#fff; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:0.76rem; margin:0;">📁 Chọn ảnh trên máy</label>
+          <input type="file" id="localImgPicker" accept="image/*" style="display:none;">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1; display:block; margin-bottom:4px;">Tóm tắt thông số kỹ thuật:</label>
+      <input type="text" name="specs_summary" id="p_specs" value="Chip LED tiết kiệm điện, điều khiển qua App điện thoại." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.22); background:#0f172a; color:#fff;">
+    </div>
+    <div style="margin-top:12px;">
+      <button type="submit" class="btn btn-coral" style="padding:10px 22px;">💾 Lưu Thiết bị &amp; Đồng bộ MongoDB</button>
+    </div>
+  </form>
+
+  <div style="overflow-x:auto;">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Ảnh</th>
+          <th>SKU</th>
+          <th>Tên thiết bị</th>
+          <th>Danh mục</th>
+          <th>Công suất</th>
+          <th>BH</th>
+          <th>Giá bán</th>
+          <th>Tồn kho</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td><img src="{{ p.display_image }}" alt="{{ p.name }}" style="width:46px; height:36px; object-fit:cover; border-radius:5px;"></td>
+          <td><strong style="color:#fbbf24;">{{ p.sku }}</strong></td>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.category.name }}</td>
+          <td>{{ p.power_watt }}W</td>
+          <td>{{ p.warranty_months }} th</td>
+          <td style="color:#f472b6; font-weight:700;">{{ p.price|vnd }} ₫</td>
+          <td><strong style="color:{% if p.stock > 10 %}#2dd4bf{% else %}#fb7185{% endif %};">{{ p.stock }}</strong></td>
+          <td style="display:flex; gap:6px;">
+            <a href="/admin/shop/product/{{ p.id }}/change/" class="btn" style="padding:5px 9px; font-size:0.76rem;">✏️ Sửa chi tiết</a>
+            <form method="post" onsubmit="return confirm('Xóa thiết bị {{ p.name }}?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_product">
+              <input type="hidden" name="tab" value="products">
+              <input type="hidden" name="prod_id" value="{{ p.id }}">
+              <button type="submit" class="btn" style="padding:5px 9px; font-size:0.76rem; color:#fb7185; border-color:#fb7185;">🗑️</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- 3. TAB TÀI KHOẢN NGƯỜI DÙNG -->
+{% if active_tab == 'users' %}
+<div class="card" style="margin-bottom:24px;">
+  <h2 style="color:#38bdf8; font-size:1.2rem; margin-bottom:14px;">👤 Quản lý Tài khoản người dùng (Collection: techgear_db.users)</h2>
+
+  <form method="post" class="admin-form-box">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_user">
+    <input type="hidden" name="tab" value="users">
+    <input type="hidden" name="user_id" id="u_id" value="">
+    <div class="admin-form-grid">
+      <div>
+        <label>Địa chỉ Gmail / Username:</label>
+        <input type="text" name="email" id="u_email" placeholder="VD: khachhang@gmail.com" required>
+      </div>
+      <div>
+        <label>Họ và tên:</label>
+        <input type="text" name="first_name" id="u_name" placeholder="VD: Nguyễn Văn B">
+      </div>
+      <div>
+        <label>Mật khẩu (để trống nếu không đổi):</label>
+        <input type="password" name="password" placeholder="Nhập mật khẩu...">
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+      <label style="font-size:0.85rem; color:#e2e8f0; cursor:pointer;"><input type="checkbox" name="is_staff" id="u_staff"> Quyền Quản trị viên (Admin/Staff)</label>
+      <label style="font-size:0.85rem; color:#e2e8f0; cursor:pointer;"><input type="checkbox" name="is_active" id="u_active" checked> Đang hoạt động (Active)</label>
+      <button type="submit" class="btn btn-teal" style="padding:8px 18px;">💾 Lưu Tài khoản</button>
+    </div>
+  </form>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tên đăng nhập / Gmail</th>
+        <th>Họ tên</th>
+        <th>Quyền Admin</th>
+        <th>Trạng thái</th>
+        <th>Ngày tạo</th>
+        <th>Thao tác</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users_list %}
+      <tr>
+        <td>#{{ u.id }}</td>
+        <td><strong style="color:#38bdf8;">{{ u.email|default:u.username }}</strong></td>
+        <td>{{ u.first_name|default:"—" }}</td>
+        <td>{% if u.is_staff %}<span style="color:#2dd4bf; font-weight:700;">✓ Admin</span>{% else %}Khách hàng{% endif %}</td>
+        <td>{% if u.is_active %}<span style="color:#4ade80;">Hoạt động</span>{% else %}Khóa{% endif %}</td>
+        <td>{{ u.date_joined|date:"d/m/Y H:i" }}</td>
+        <td style="display:flex; gap:6px;">
+          <button type="button" class="btn" style="padding:5px 9px; font-size:0.76rem;" onclick="document.getElementById('u_id').value='{{ u.id }}'; document.getElementById('u_email').value='{{ u.email|default:u.username|escapejs }}'; document.getElementById('u_name').value='{{ u.first_name|escapejs }}'; document.getElementById('u_staff').checked={{ u.is_staff|yesno:'true,false' }};">✏️ Sửa</button>
+          {% if u.id != user.id %}
+          <form method="post" onsubmit="return confirm('Xóa tài khoản {{ u.username }}?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_user">
+            <input type="hidden" name="tab" value="users">
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            <button type="submit" class="btn" style="padding:5px 9px; font-size:0.76rem; color:#fb7185; border-color:#fb7185;">🗑️ Xóa</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- 4. TAB ĐÁNH GIÁ THIẾT BỊ -->
+{% if active_tab == 'reviews' %}
+<div class="card" style="margin-bottom:24px;">
+  <h2 style="color:#38bdf8; font-size:1.2rem; margin-bottom:14px;">⭐ Quản lý Đánh giá thiết bị (Collection: techgear_db.reviews)</h2>
+
+  <form method="post" class="admin-form-box">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_review">
+    <input type="hidden" name="tab" value="reviews">
+    <input type="hidden" name="rev_id" id="r_id" value="">
+    <div class="admin-form-grid">
+      <div>
+        <label>Thiết bị:</label>
+        <select name="product_id" id="r_prod">
+          {% for p in products %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Gmail người đánh giá:</label>
+        <input type="text" name="reviewer_name" id="r_name" value="sv.cntt@gmail.com" required>
+      </div>
+      <div>
+        <label>Số sao (1-5):</label>
+        <select name="rating" id="r_rating">
+          <option value="5">5 sao (★★★★★)</option>
+          <option value="4">4 sao (★★★★)</option>
+          <option value="3">3 sao (★★★)</option>
+          <option value="2">2 sao (★★)</option>
+          <option value="1">1 sao (★)</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+      <input type="text" name="comment" id="r_comment" placeholder="Nội dung nhận xét kỹ thuật..." required style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.22); background:#0f172a; color:#fff;">
+      <button type="submit" class="btn btn-teal" style="padding:9px 18px;">💾 Lưu Đánh giá</button>
+    </div>
+  </form>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Thiết bị</th>
+        <th>Người đánh giá</th>
+        <th>Số sao</th>
+        <th>Nội dung nhận xét</th>
+        <th>Ngày đánh giá</th>
+        <th>Thao tác</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reviews_list %}
+      <tr>
+        <td><strong>{{ r.product.name }}</strong></td>
+        <td style="color:#38bdf8;">{{ r.reviewer_name }}</td>
+        <td style="color:#fbbf24; font-weight:700;">{{ r.rating }}/5 ★</td>
+        <td>{{ r.comment }}</td>
+        <td>{{ r.created_at|date:"d/m/Y H:i" }}</td>
+        <td>
+          <form method="post" onsubmit="return confirm('Xóa đánh giá này?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_review">
+            <input type="hidden" name="tab" value="reviews">
+            <input type="hidden" name="rev_id" value="{{ r.id }}">
+            <button type="submit" class="btn" style="padding:5px 9px; font-size:0.76rem; color:#fb7185; border-color:#fb7185;">🗑️ Xóa</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- 5. TAB ĐƠN HÀNG -->
+{% if active_tab == 'orders' or active_tab == 'overview' %}
+<div class="card" style="margin-bottom:24px;">
+  <h2 style="color:#38bdf8; font-size:1.2rem; margin-bottom:14px;">📦 Quản lý Đơn hàng &amp; Kích hoạt Bảo hành (Collection: techgear_db.orders)</h2>
+
+  <div style="overflow-x:auto;">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Họ tên người nhận</th>
+          <th>SĐT Bảo hành</th>
+          <th>Thanh toán</th>
+          <th>Mã KM</th>
+          <th>Tổng tiền</th>
+          <th>Trạng thái đơn (Đổi trực tiếp)</th>
+          <th>Ngày đặt</th>
+          <th>Xóa</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders_list %}
+        <tr>
+          <td><strong style="color:#38bdf8;">#{{ o.id }}</strong></td>
+          <td><strong>{{ o.full_name }}</strong></td>
+          <td style="color:#2dd4bf; font-weight:700;">{{ o.phone }}</td>
+          <td>{% if o.payment_method == 'cod' %}Thanh toán COD{% else %}Chuyển khoản / QR{% endif %}</td>
+          <td style="color:#fb923c; font-weight:700;">{{ o.promo_code|default:"—" }}</td>
+          <td style="color:#f472b6; font-weight:800;">{{ o.total_price|vnd }} VNĐ</td>
+          <td>
+            <form method="post" style="display:flex; gap:6px; align-items:center;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_order_status">
+              <input type="hidden" name="tab" value="orders">
+              <input type="hidden" name="order_id" value="{{ o.id }}">
+              <select name="status" style="padding:5px 8px; border-radius:6px; background:#0f172a; color:#f8fafc; border:1px solid rgba(255,255,255,0.2); font-size:0.8rem;">
+                <option value="pending" {% if o.status == 'pending' %}selected{% endif %}>Chờ xác nhận</option>
+                <option value="shipping" {% if o.status == 'shipping' %}selected{% endif %}>Đang giao hàng</option>
+                <option value="completed" {% if o.status == 'completed' %}selected{% endif %}>Đã hoàn thành (BH)</option>
+                <option value="cancelled" {% if o.status == 'cancelled' %}selected{% endif %}>Đã hủy (Hoàn kho)</option>
+              </select>
+              <button type="submit" class="btn btn-teal" style="padding:5px 10px; font-size:0.76rem;">Lưu</button>
+            </form>
+          </td>
+          <td>{{ o.created_at|date:"d/m/Y H:i" }}</td>
+          <td>
+            <form method="post" onsubmit="return confirm('Xóa đơn hàng #{{ o.id }}?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_order">
+              <input type="hidden" name="tab" value="orders">
+              <input type="hidden" name="order_id" value="{{ o.id }}">
+              <button type="submit" class="btn" style="padding:5px 9px; font-size:0.76rem; color:#fb7185; border-color:#fb7185;">🗑️</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  (function() {
+    var picker = document.getElementById('localImgPicker');
+    var imgInput = document.getElementById('p_img');
+    if (picker && imgInput) {
+      picker.addEventListener('change', function(e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          imgInput.value = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  })();
+</script>
+{% endblock %}

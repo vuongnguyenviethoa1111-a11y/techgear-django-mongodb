@@ -602,3 +602,266 @@ def logout_view(request):
     logout(request)
     messages.info(request, "Bạn đã đăng xuất. Giỏ hàng của bạn đã được lưu an toàn và sẽ tự khôi phục khi đăng nhập lại.")
     return redirect('home')
+
+
+@csrf_exempt
+@login_required(login_url='login')
+def admin_panel(request):
+    """
+    Trang Quản lý hệ thống dành cho Admin ngay trên giao diện web (/quan-ly/):
+    Bao gồm đầy đủ 5 phân hệ trong khối QUẢN LÝ THIẾT BỊ CÔNG NGHỆ & ĐÈN LED (TECHGEAR):
+    1. Danh mục thiết bị (categories) - Thêm / Sửa / Xóa
+    2. Thiết bị & Đèn LED (products) - Thêm / Sửa (chọn ảnh từ máy hoặc link) / Xóa
+    3. Tài khoản người dùng (users) - Thêm / Đổi quyền Staff / Kích hoạt / Xóa
+    4. Đánh giá thiết bị (reviews) - Thêm / Sửa / Xóa
+    5. Đơn hàng (orders) - Đổi trạng thái đơn (Chờ xác nhận, Đang giao, Đã hoàn thành, Đã hủy) / Xóa
+    + Khối Xác thực & Ủy quyền (Các nhóm & Người sử dụng) và Hoạt động gần đây.
+    """
+    _ensure_catalog_synced()
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.warning(request, "Chỉ tài khoản Quản trị viên (Admin) mới có quyền truy cập trang Quản lý hệ thống.")
+        return redirect('home')
+
+    from django.contrib.auth.models import Group
+    from django.contrib.admin.models import LogEntry
+    from .mongo_client import _run_async
+    from mongo_db import categories_col, products_col, orders_col, reviews_col, users_col, check_mongo_connection
+
+    active_tab = request.GET.get('tab', 'overview').strip()
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+        active_tab = request.POST.get('tab', active_tab).strip()
+
+        # 1. QUẢN LÝ DANH MỤC THIẾT BỊ
+        if action == 'save_category':
+            cat_id = request.POST.get('cat_id', '').strip()
+            name = request.POST.get('name', '').strip()
+            slug = request.POST.get('slug', '').strip()
+            if name and slug:
+                if cat_id:
+                    cat = get_object_or_404(Category, id=int(cat_id))
+                    cat.name = name
+                    cat.slug = slug
+                    cat.save()
+                    messages.success(request, f"Đã cập nhật danh mục '{name}'.")
+                else:
+                    cat, _ = Category.objects.update_or_create(slug=slug, defaults={'name': name})
+                    messages.success(request, f"Đã thêm danh mục mới '{name}'.")
+                _run_async(sync_category_to_mongo, cat)
+
+        elif action == 'delete_category':
+            cat_id = int(request.POST.get('cat_id', 0))
+            cat = Category.objects.filter(id=cat_id).first()
+            if cat:
+                slug_val = cat.slug
+                cat.delete()
+                if check_mongo_connection():
+                    _run_async(categories_col.delete_one, {'slug': slug_val})
+                messages.info(request, "Đã xóa danh mục thiết bị.")
+
+        # 2. QUẢN LÝ THIẾT BỊ & ĐÈN LED
+        elif action == 'save_product':
+            prod_id = request.POST.get('prod_id', '').strip()
+            cat_id = int(request.POST.get('category_id', 0))
+            category = get_object_or_404(Category, id=cat_id)
+            sku = request.POST.get('sku', 'TG-NEW-01').strip()
+            name = request.POST.get('name', '').strip()
+            brand = request.POST.get('brand', 'TechGear').strip()
+            price = int(request.POST.get('price', 199000) or 199000)
+            warranty_months = int(request.POST.get('warranty_months', 12) or 12)
+            stock = int(request.POST.get('stock', 20) or 20)
+            power_watt = int(request.POST.get('power_watt', 12) or 12)
+            voltage = request.POST.get('voltage', '220V / USB-C 5V').strip()
+            connectivity = request.POST.get('connectivity', 'Wi-Fi 2.4GHz / Bluetooth').strip()
+            color_temp = request.POST.get('color_temp', 'RGB 16 triệu màu').strip()
+            lifespan_hours = int(request.POST.get('lifespan_hours', 30000) or 30000)
+            variants = request.POST.get('variants', 'Bản Tiêu Chuẩn,Bản Pro').strip()
+            specs_summary = request.POST.get('specs_summary', '').strip()
+            image_url = request.POST.get('image_url', '').strip()
+
+            if prod_id:
+                prod = get_object_or_404(Product, id=int(prod_id))
+                prod.category = category
+                prod.sku = sku
+                prod.name = name
+                prod.brand = brand
+                prod.price = price
+                prod.warranty_months = warranty_months
+                prod.stock = stock
+                prod.power_watt = power_watt
+                prod.voltage = voltage
+                prod.connectivity = connectivity
+                prod.color_temp = color_temp
+                prod.lifespan_hours = lifespan_hours
+                prod.variants = variants
+                prod.specs_summary = specs_summary
+                prod.description = specs_summary
+                if image_url:
+                    prod.image_url = image_url
+                prod.save()
+                messages.success(request, f"Đã cập nhật thiết bị [{sku}] {name}.")
+            else:
+                prod = Product.objects.create(
+                    category=category,
+                    sku=sku,
+                    name=name,
+                    brand=brand,
+                    price=price,
+                    warranty_months=warranty_months,
+                    stock=stock,
+                    power_watt=power_watt,
+                    voltage=voltage,
+                    connectivity=connectivity,
+                    color_temp=color_temp,
+                    lifespan_hours=lifespan_hours,
+                    variants=variants,
+                    specs_summary=specs_summary,
+                    description=specs_summary,
+                    image_url=image_url,
+                )
+                messages.success(request, f"Đã thêm thiết bị mới [{sku}] {name}.")
+            _run_async(sync_product_to_mongo, prod)
+
+        elif action == 'delete_product':
+            prod_id = int(request.POST.get('prod_id', 0))
+            prod = Product.objects.filter(id=prod_id).first()
+            if prod:
+                sku_val = prod.sku
+                prod.delete()
+                if check_mongo_connection():
+                    _run_async(products_col.delete_one, {'sku': sku_val})
+                messages.info(request, f"Đã xóa thiết bị [{sku_val}].")
+
+        # 3. QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG
+        elif action == 'save_user':
+            user_id = request.POST.get('user_id', '').strip()
+            email = request.POST.get('email', '').strip().lower()
+            first_name = request.POST.get('first_name', '').strip()
+            password = request.POST.get('password', '').strip()
+            is_staff = request.POST.get('is_staff') == 'on'
+            is_active = request.POST.get('is_active') == 'on'
+
+            if user_id:
+                u = get_object_or_404(User, id=int(user_id))
+                if email:
+                    u.email = email
+                u.first_name = first_name
+                u.is_staff = is_staff
+                u.is_active = is_active
+                if password:
+                    u.set_password(password)
+                u.save()
+                _run_async(sync_user_to_mongo, u)
+                messages.success(request, f"Đã cập nhật tài khoản '{u.username}'.")
+            elif email and password:
+                if User.objects.filter(Q(username__iexact=email) | Q(email__iexact=email)).exists():
+                    messages.warning(request, "Tài khoản Gmail này đã tồn tại.")
+                else:
+                    u = User.objects.create_user(
+                        username=email,
+                        email=email,
+                        password=password,
+                        first_name=first_name,
+                    )
+                    u.is_staff = is_staff
+                    u.is_active = is_active
+                    u.save()
+                    _run_async(sync_user_to_mongo, u)
+                    messages.success(request, f"Đã tạo tài khoản người dùng '{email}'.")
+
+        elif action == 'delete_user':
+            user_id = int(request.POST.get('user_id', 0))
+            u = User.objects.filter(id=user_id).first()
+            if u and u.id != request.user.id:
+                uname = u.username
+                u.delete()
+                if check_mongo_connection():
+                    _run_async(users_col.delete_one, {'username': uname})
+                messages.info(request, f"Đã xóa tài khoản '{uname}'.")
+
+        # 4. QUẢN LÝ ĐÁNH GIÁ THIẾT BỊ
+        elif action == 'save_review':
+            rev_id = request.POST.get('rev_id', '').strip()
+            prod_id = int(request.POST.get('product_id', 0))
+            prod = get_object_or_404(Product, id=prod_id)
+            reviewer_name = request.POST.get('reviewer_name', 'sv.cntt@gmail.com').strip()
+            rating = max(1, min(5, int(request.POST.get('rating', 5) or 5)))
+            comment = request.POST.get('comment', '').strip()
+            if rev_id:
+                rev = get_object_or_404(Review, id=int(rev_id))
+                rev.product = prod
+                rev.reviewer_name = reviewer_name
+                rev.rating = rating
+                rev.comment = comment
+                rev.save()
+                messages.success(request, f"Đã cập nhật đánh giá của '{reviewer_name}'.")
+            else:
+                rev = Review.objects.create(
+                    product=prod,
+                    user=request.user,
+                    reviewer_name=reviewer_name,
+                    rating=rating,
+                    comment=comment,
+                )
+                messages.success(request, f"Đã thêm đánh giá mới cho '{prod.name}'.")
+            _run_async(sync_review_to_mongo, rev)
+
+        elif action == 'delete_review':
+            rev_id = int(request.POST.get('rev_id', 0))
+            rev = Review.objects.filter(id=rev_id).first()
+            if rev:
+                rev.delete()
+                if check_mongo_connection():
+                    _run_async(reviews_col.delete_one, {'review_id': rev_id})
+                messages.info(request, "Đã xóa đánh giá thiết bị.")
+
+        # 5. QUẢN LÝ ĐƠN HÀNG
+        elif action == 'update_order_status':
+            ord_id = int(request.POST.get('order_id', 0))
+            new_status = request.POST.get('status', 'pending').strip()
+            ord_obj = get_object_or_404(Order, id=ord_id)
+            old_status = ord_obj.status
+            ord_obj.status = new_status
+            ord_obj.save()
+
+            order_items = list(ord_obj.items.select_related('product').all())
+            # Nếu chuyển sang Đã hủy từ trạng thái khác, tự động hoàn lại tồn kho
+            if new_status == 'cancelled' and old_status != 'cancelled':
+                for item in order_items:
+                    item.product.stock += item.quantity
+                    item.product.save()
+                _run_async(cancel_order_in_mongo, ord_obj, order_items)
+            else:
+                _run_async(sync_order_to_mongo, ord_obj, order_items, True)
+            messages.success(request, f"Đã cập nhật trạng thái Đơn hàng #{ord_id} thành '{ord_obj.get_status_display()}'.")
+
+        elif action == 'delete_order':
+            ord_id = int(request.POST.get('order_id', 0))
+            ord_obj = Order.objects.filter(id=ord_id).first()
+            if ord_obj:
+                ord_obj.delete()
+                if check_mongo_connection():
+                    _run_async(orders_col.delete_one, {'order_id': ord_id})
+                messages.info(request, f"Đã xóa Đơn hàng #{ord_id}.")
+
+        return redirect(f"/quan-ly/?tab={active_tab}")
+
+    categories = Category.objects.all().order_by('id')
+    products = Product.objects.select_related('category').all().order_by('id')
+    users_list = User.objects.all().order_by('-date_joined')
+    reviews_list = Review.objects.select_related('product').all().order_by('-created_at')
+    orders_list = Order.objects.prefetch_related('items__product').all().order_by('-id')
+    groups_list = Group.objects.all()
+    recent_logs = LogEntry.objects.select_related('user', 'content_type').order_by('-action_time')[:10]
+
+    return render(request, 'shop/admin_panel.html', {
+        'active_tab': active_tab,
+        'categories': categories,
+        'products': products,
+        'users_list': users_list,
+        'reviews_list': reviews_list,
+        'orders_list': orders_list,
+        'groups_list': groups_list,
+        'recent_logs': recent_logs,
+    })
