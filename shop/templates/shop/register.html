@@ -6,20 +6,20 @@
   <p style="font-size:0.86rem; color:#94a3b8; margin-bottom:18px; line-height:1.5;">
     Chỉ cần nhập địa chỉ Gmail và 2 lần mật khẩu để tạo tài khoản mua thiết bị &amp; đồng bộ trực tiếp vào collection 'users' (techgear_db).
   </p>
-  <form method="post" style="display:flex; flex-direction:column; gap:14px;">
+  <form method="post" autocomplete="off" style="display:flex; flex-direction:column; gap:14px;">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next|default:'/' }}">
     <div>
       <label style="display:block; font-size:0.85rem; font-weight:700; color:#e2e8f0; margin-bottom:6px;">Địa chỉ Gmail / Email:</label>
-      <input type="email" name="email" value="vuongnguyenviethoa1111@gmail.com" placeholder="vuongnguyenviethoa1111@gmail.com" required style="width:100%; padding:11px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
+      <input type="email" name="email" value="" autocomplete="off" placeholder="Nhập địa chỉ Gmail của bạn..." required style="width:100%; padding:11px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
     </div>
     <div>
       <label style="display:block; font-size:0.85rem; font-weight:700; color:#e2e8f0; margin-bottom:6px;">Mật khẩu:</label>
-      <input type="password" name="password" placeholder="••••••••••••" required style="width:100%; padding:11px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
+      <input type="password" name="password" value="" autocomplete="new-password" placeholder="Nhập mật khẩu..." required style="width:100%; padding:11px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
     </div>
     <div>
       <label style="display:block; font-size:0.85rem; font-weight:700; color:#e2e8f0; margin-bottom:6px;">Nhập lại mật khẩu:</label>
-      <input type="password" name="confirm_password" placeholder="••••••••••••" required style="width:100%; padding:11px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
+      <input type="password" name="confirm_password" value="" autocomplete="new-password" placeholder="Nhập lại mật khẩu..." required style="width:100%; padding:11px 14px; border:1px solid rgba(59, 130, 246, 0.45); border-radius:8px; background:rgba(15, 23, 42, 0.9); color:#f8fafc;">
     </div>
     <div style="display:flex; align-items:center; gap:14px; margin-top:4px;">
       <button type="submit" class="btn" style="background:#ec4899 !important; color:#ffffff !important; border:none !important; padding:10px 22px; font-weight:700;">Đăng ký ngay</button>
