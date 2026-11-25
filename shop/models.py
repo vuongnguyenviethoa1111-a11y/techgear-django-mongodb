@@ -37,7 +37,7 @@ class Product(models.Model):
         verbose_name="Các phiên bản / Công suất tùy chọn (cách nhau dấu phẩy)"
     )
     specs_summary = models.CharField(max_length=255, default="Chip LED tiết kiệm điện, điều khiển qua App", verbose_name="Tóm tắt thông số kỹ thuật")
-    image_url = models.URLField(max_length=500, blank=True, verbose_name="Link ảnh thiết bị")
+    image_url = models.TextField(blank=True, verbose_name="Link ảnh thiết bị (hoặc tải ảnh từ máy)")
     description = models.TextField(blank=True, verbose_name="Mô tả kỹ thuật chi tiết")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -130,3 +130,14 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.reviewer_name} - {self.product.name} ({self.rating} sao)"
+
+
+class CustomerAccount(User):
+    """
+    Proxy Model hiển thị mục 'Tài khoản người dùng' ngay trong khối
+    QUẢN LÝ THIẾT BỊ CÔNG NGHỆ & ĐÈN LED (TECHGEAR) ở menu bên trái trang Admin.
+    """
+    class Meta:
+        proxy = True
+        verbose_name = "Tài khoản người dùng"
+        verbose_name_plural = "Tài khoản người dùng"

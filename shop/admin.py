@@ -1,10 +1,107 @@
+from django import forms
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-from .models import Category, Product, Order, OrderItem, Review
+from django.utils.safestring import mark_safe
+from .models import Category, Product, Order, OrderItem, Review, CustomerAccount
 
 admin.site.site_header = "TECHGEAR LED & SMART DEVICES - QUẢN TRỊ HỆ THỐNG"
 admin.site.site_title = "TechGear Admin | Quản trị hệ thống"
-admin.site.index_title = "Chọn Đơn hàng để thay đổi (Quản lý trạng thái đơn & Kích hoạt bảo hành điện tử)"
+admin.site.index_title = "Bảng điều khiển Quản lý Thiết bị, Đơn hàng, Bảo hành & Tài khoản người dùng"
+
+
+class ImageUrlOrUploadWidget(forms.TextInput):
+    """
+    Widget cho phép Admin:
+    1. Dán trực tiếp Link ảnh (URL) từ Internet.
+    2. Hoặc bấm nút '📁 Chọn ảnh từ máy tính' -> tự động đọc file sang DataURL (Base64)
+       và hiển thị ảnh xem trước ngay lập tức (không bao giờ mất ảnh khi deploy trên Railway).
+    """
+    def render(self, name, value, attrs=None, renderer=None):
+        if attrs is None:
+            attrs = {}
+        attrs['style'] = 'width: 75%; max-width: 520px; padding: 7px 10px;'
+        attrs['placeholder'] = 'Dán link ảnh (https://...) hoặc bấm nút Chọn ảnh từ máy bên dưới...'
+        input_html = super().render(name, value, attrs, renderer)
+        input_id = attrs.get('id', f'id_{name}')
+        preview_src = value if value else 'https://placehold.co/600x400/2563eb/ffffff?text=Preview'
+
+        extra_ui = f"""
+        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+            <label for="{input_id}_file_picker" style="
+                display: inline-flex; align-items: center; gap: 6px;
+                background: #2563eb; color: #ffffff; padding: 7px 14px;
+                border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;
+            ">
+                📁 Chọn ảnh từ máy tính
+            </label>
+            <input type="file" id="{input_id}_file_picker" accept="image/*" style="display:none;" />
+            <button type="button" id="{input_id}_url_btn" style="
+                background: #0d9488; color: #ffffff; border: none; padding: 7px 14px;
+                border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;
+            ">
+                🔗 Nhập Link ảnh (URL)
+            </button>
+            <span id="{input_id}_status" style="font-size: 12px; color: #0d9488; font-weight: 600;"></span>
+        </div>
+        <div style="margin-top: 10px;">
+            <img id="{input_id}_preview" src="{preview_src}" alt="Xem trước ảnh" style="
+                max-height: 130px; max-width: 240px; border-radius: 8px;
+                border: 1px solid #cbd5e1; object-fit: cover; display: {'block' if value else 'none'};
+            " />
+        </div>
+        <script>
+        (function() {{
+            var textInput = document.getElementById('{input_id}');
+            var fileInput = document.getElementById('{input_id}_file_picker');
+            var urlBtn = document.getElementById('{input_id}_url_btn');
+            var preview = document.getElementById('{input_id}_preview');
+            var status = document.getElementById('{input_id}_status');
+            if (!textInput || !fileInput) return;
+
+            textInput.addEventListener('input', function() {{
+                if (textInput.value.trim()) {{
+                    preview.src = textInput.value.trim();
+                    preview.style.display = 'block';
+                }}
+            }});
+
+            urlBtn.addEventListener('click', function() {{
+                var current = textInput.value.startsWith('http') ? textInput.value : '';
+                var entered = prompt('Dán đường dẫn (URL) ảnh thiết bị vào đây:', current);
+                if (entered !== null && entered.trim() !== '') {{
+                    textInput.value = entered.trim();
+                    preview.src = entered.trim();
+                    preview.style.display = 'block';
+                    status.textContent = '✓ Đã gắn link ảnh từ URL!';
+                }}
+            }});
+
+            fileInput.addEventListener('change', function(e) {{
+                var file = e.target.files && e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(evt) {{
+                    textInput.value = evt.target.result;
+                    preview.src = evt.target.result;
+                    preview.style.display = 'block';
+                    status.textContent = '✓ Đã tải ảnh "' + file.name + '" từ máy tính!';
+                }};
+                reader.readAsDataURL(file);
+            }});
+        }})();
+        </script>
+        """
+        return mark_safe(input_html + extra_ui)
+
+
+class ProductAdminForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = '__all__'
+        widgets = {
+            'image_url': ImageUrlOrUploadWidget(),
+        }
 
 
 @admin.register(Category)
@@ -15,6 +112,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    form = ProductAdminForm
     list_display = ('sku', 'name', 'category', 'brand', 'power_watt', 'connectivity', 'warranty_months', 'price', 'stock')
     list_filter = ('category', 'brand', 'warranty_months')
     search_fields = ('sku', 'name', 'brand', 'connectivity', 'specs_summary')
@@ -95,3 +193,14 @@ class ReviewAdmin(admin.ModelAdmin):
     list_display = ('id', 'product', 'reviewer_name', 'rating', 'created_at')
     list_filter = ('rating', 'created_at')
     search_fields = ('reviewer_name', 'comment', 'product__name')
+
+
+@admin.register(CustomerAccount)
+class CustomerAccountAdmin(UserAdmin):
+    """
+    Quản lý 'Tài khoản người dùng' trực tiếp trong mục
+    QUẢN LÝ THIẾT BỊ CÔNG NGHỆ & ĐÈN LED (TECHGEAR) ở menu bên trái Admin.
+    """
+    list_display = ('username', 'email', 'first_name', 'is_staff', 'is_active', 'date_joined')
+    list_filter = ('is_staff', 'is_active', 'date_joined')
+    search_fields = ('username', 'email', 'first_name')
