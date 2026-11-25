@@ -43,12 +43,14 @@ _CATALOG_SYNCED_ONCE = False
 def _ensure_catalog_synced():
     """Tự động đẩy dữ liệu hàng hóa, ảnh sản phẩm thật & 2 đơn hàng mẫu lên `techgear_db` ngay khi mở trang."""
     global _CATALOG_SYNCED_ONCE
-    has_old_placeholder = Product.objects.filter(image_url__icontains='placehold.co').exists()
+    needs_img_sync = Product.objects.filter(
+        Q(image_url__icontains='placehold.co') | Q(sku='TG-HUB-8IN1', image_url__icontains='unsplash.com')
+    ).exists()
     if (
         not _CATALOG_SYNCED_ONCE
         or not Category.objects.exists()
         or Order.objects.count() < 2
-        or has_old_placeholder
+        or needs_img_sync
     ):
         sync_all_catalog_between_django_and_mongo(Category, Product)
         _CATALOG_SYNCED_ONCE = True

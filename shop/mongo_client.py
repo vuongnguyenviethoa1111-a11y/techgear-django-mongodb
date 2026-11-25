@@ -63,7 +63,7 @@ INITIAL_PRODUCTS = [
         "variants": "Cuộn 5m (24W),Cuộn 10m Pro (36W)",
         "specs_summary": "Chip LED 5050 phủ keo chống ẩm IP65, điều khiển qua App điện thoại.",
         "description": "Cuộn dây đèn LED RGBIC 5m tích hợp vi điều khiển độc lập từng đoạn màu, đồng bộ nhịp nhạc qua micro độ nhạy cao và điều khiển từ xa qua Wi-Fi 2.4GHz.",
-        "image_url": "https://images.unsplash.com/photo-1563089145-599997674d42?w=800&auto=format&fit=crop&q=80",
+        "image_url": "/static/shop/products/tg_led_rgb05.jpg",
     },
     {
         "category_slug": "den-led-thong-minh",
@@ -82,7 +82,7 @@ INITIAL_PRODUCTS = [
         "variants": "Bóng 9W,Bóng 12W Siêu Sáng",
         "specs_summary": "Quang thông 1100 Lumens, hẹn giờ bật tắt tự động không cần Hub.",
         "description": "Bóng đèn LED thông minh chuẩn đui E27 thông dụng, cho phép tùy chỉnh độ sáng 1%-100%, đổi 16 triệu màu RGB và hẹn giờ tự động qua smartphone.",
-        "image_url": "https://images.unsplash.com/photo-1550985616-10810253b84d?w=800&auto=format&fit=crop&q=80",
+        "image_url": "/static/shop/products/tg_bulb_w12.jpg",
     },
     {
         "category_slug": "den-ban-setup-pc",
@@ -120,7 +120,7 @@ INITIAL_PRODUCTS = [
         "variants": "Bộ 2 Thanh Đứng,Bộ 2 Thanh + Hub Sync PC",
         "specs_summary": "Đồng bộ màu sắc thời gian thực theo game và phim trên máy tính.",
         "description": "Bộ 2 thanh đèn LED RGBIC đặt hai bên màn hình PC, tự động đọc màu sắc khung hình game/phim qua cổng USB-C để tạo hiệu ứng ánh sáng tràn viền.",
-        "image_url": "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=800&auto=format&fit=crop&q=80",
+        "image_url": "/static/shop/products/tg_amb_bar2.jpg",
     },
     {
         "category_slug": "thiet-bi-smart-home",
@@ -139,7 +139,7 @@ INITIAL_PRODUCTS = [
         "variants": "Bản 16A Tiêu Chuẩn,Bản 20A Có Đo Điện Năng",
         "specs_summary": "Theo dõi số kWh điện tiêu thụ trên điện thoại, hẹn giờ tắt sạc an toàn.",
         "description": "Ổ cắm thông minh chịu tải cao 20A (4400W), tích hợp chip đo công suất thực tế (W, V, A, kWh) theo ngày/tháng và tự ngắt khi quá tải.",
-        "image_url": "https://images.unsplash.com/photo-1558002038-1055907df827?w=800&auto=format&fit=crop&q=80",
+        "image_url": "/static/shop/products/tg_plug_w20.jpg",
     },
     {
         "category_slug": "thiet-bi-smart-home",
@@ -158,7 +158,7 @@ INITIAL_PRODUCTS = [
         "variants": "Thanh 30cm,Thanh 50cm Pin Lớn",
         "specs_summary": "Tự bật sáng khi có người đi qua trong tối, gắn nam châm cầu thang/tủ áo.",
         "description": "Thanh đèn LED không dây tích hợp cảm biến thân nhiệt hồng ngoại PIR góc rộng 120 độ, chỉ bật khi trời tối và tự tắt sau 20 giây không có chuyển động.",
-        "image_url": "https://images.unsplash.com/photo-1565646246688-070d3ce2630e?w=800&auto=format&fit=crop&q=80",
+        "image_url": "/static/shop/products/tg_sens_pir1.jpg",
     },
     {
         "category_slug": "phu-kien-cong-nghe",
@@ -196,7 +196,7 @@ INITIAL_PRODUCTS = [
         "variants": "Bản 6-in-1,Bản 8-in-1 Có Cổng LAN Gigabit",
         "specs_summary": "Mở rộng kết nối cho Laptop/MacBook, truyền dữ liệu 5Gbps ổn định.",
         "description": "Bộ chia cổng USB Type-C 8 trong 1 vỏ hợp kim nhôm nguyên khối, hỗ trợ xuất hình ảnh HDMI 4K@60Hz sắc nét và cổng mạng dây RJ45 Gigabit.",
-        "image_url": "https://images.unsplash.com/photo-1688703696041-0e6c14fa9174?w=800&auto=format&fit=crop&q=80",
+        "image_url": "/static/shop/products/tg_hub_8in1.jpg",
     },
 ]
 
@@ -401,17 +401,18 @@ def sync_all_catalog_between_django_and_mongo(CategoryModel, ProductModel):
     all_products = list(ProductModel.objects.select_related("category").all())
     prod_by_sku = {p.sku: p for p in all_products}
 
-    # Tự động thay thế các ảnh chữ placehold.co cũ hoặc ảnh lỗi bằng ảnh chụp sản phẩm thật
+    # Tự động cập nhật 6 ảnh sản phẩm do người dùng cung cấp và ảnh mặc định cho các sản phẩm còn lại
     real_img_map = {item["sku"]: item["image_url"] for item in INITIAL_PRODUCTS}
     for prod in all_products:
         new_img = real_img_map.get(prod.sku)
         if new_img and (
             not prod.image_url
             or "placehold.co" in prod.image_url
-            or "1761043248662" in prod.image_url
+            or "images.unsplash.com" in prod.image_url
         ):
-            ProductModel.objects.filter(id=prod.id).update(image_url=new_img)
-            prod.image_url = new_img
+            if prod.image_url != new_img:
+                ProductModel.objects.filter(id=prod.id).update(image_url=new_img)
+                prod.image_url = new_img
 
     # Lùi ngày tạo 8 sản phẩm về tuần trước (13/11 - 16/11/2026) với giờ phút tự nhiên
     prod_timestamps = [
